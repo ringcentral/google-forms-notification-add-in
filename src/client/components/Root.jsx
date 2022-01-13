@@ -83,10 +83,9 @@ export function App({ integrationHelper, client }) {
     async function getInfo() {
       setLoading(true);
       try {
-        const { user: userInfo, hasSubscription: hasSubscription } = await client.getUserInfo();
+        const { user: userInfo } = await client.getUserInfo();
         if (userInfo) {
           setUserInfo(userInfo);
-          setSubscribed(hasSubscription);
         }
       } catch (e) {
         console.error(e);
@@ -170,6 +169,7 @@ export function App({ integrationHelper, client }) {
                     setLoading(false);
                     return;
                   }
+                  setLoading(true);
                   try {
                     // Authorize
                     await client.authorize(e.data.authCallback);

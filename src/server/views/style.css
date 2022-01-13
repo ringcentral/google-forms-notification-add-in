@@ -20,6 +20,10 @@ body {
   padding: 9px 0;
 }
 
+#copyArea {
+  display: none;
+}
+
 p img {
   max-width: 100%;
 }
