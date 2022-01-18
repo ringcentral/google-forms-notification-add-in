@@ -18,10 +18,11 @@ async function onAuthorize(accessToken, refreshToken, expires) {
       name: userInfoResponse.name,
     });
   }
-  // If user exists but logged out, we want to fill in token info
-  else if (!user.accessToken) {
+  else {
     user.accessToken = accessToken;
-    user.refreshToken = refreshToken;
+    if (refreshToken) {
+      user.refreshToken = refreshToken;
+    }
     user.tokenExpiredAt = expires;
     await user.save();
   }

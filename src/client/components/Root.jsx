@@ -12,7 +12,22 @@ import { styled } from '@ringcentral/juno/foundation';
 
 import { AuthorizationPanel } from './AuthorizationPanel';
 import { FormSelectionPanel } from './FormSelectionPanel';
-import { TemplateSettingPanel } from './TemplateSettingPanel';
+
+function mergeForms(oldForms, newForms) {
+  const forms = [];
+  const formsMap = {};
+  oldForms.forEach(form => {
+    formsMap[form.formId] = 1;
+    forms.push(form);
+  });
+  newForms.forEach(form => {
+    if (!formsMap[form.formId]) {
+      forms.push(form);
+      formsMap[form.formId] = 1;
+    }
+  });
+  return forms;
+}
 
 const Container = styled.div`
   display: flex;
@@ -29,15 +44,18 @@ function StepContent({
   authorized,
   onLogin,
   onLogout,
+  forms,
+  onSaveFormInputs,
+  onDeleteForm,
 }) {
   if (activeStep === 1) {
     return (
-      <FormSelectionPanel />
-    );
-  }
-  if (activeStep === 2) {
-    return (
-      <TemplateSettingPanel />
+      <FormSelectionPanel
+        forms={forms}
+        onDeleteForm={onDeleteForm}
+        onSaveFormInputs={onSaveFormInputs}
+        gotoNextStep={() => setActiveStep(2)}
+      />
     );
   }
   return (
@@ -59,12 +77,11 @@ export function App({ integrationHelper, client }) {
   );
   const [authorizationCompleted, setAuthorizationCompleted] = useState(false);
   const [formSelectionCompleted, setFormSelectionCompleted] = useState(false);
-  const [templateSettingCompleted, setTemplateSettingCompleted] = useState(false);
 
   const [authorized, setAuthorized] = useState(client.authorized);
   const [userInfo, setUserInfo] = useState({});
   const [subscribed, setSubscribed] = useState(false);
-
+  const [forms, setForms] = useState([]);
 
   // Listen authorized state to load webhook data:
   useEffect(() => {
@@ -101,6 +118,14 @@ export function App({ integrationHelper, client }) {
     getInfo();
   }, [authorized, subscribed]);
 
+  useEffect(() => {
+    if (forms.length > 0) {
+      setFormSelectionCompleted(true);
+    } else {
+      setFormSelectionCompleted(false);
+    }
+  }, [forms]);
+
   return (
     <RcThemeProvider>
       <RcLoading loading={loading}>
@@ -129,24 +154,11 @@ export function App({ integrationHelper, client }) {
             {
               formSelectionCompleted ? (
                 <RcStepButton onClick={() => setActiveStep(1)}>
-                  Set Form link
+                  Set Forms
                 </RcStepButton>
               ) : (
                 <RcStepLabel>
-                  Set Form link
-                </RcStepLabel>
-              )
-            }
-          </RcStep>
-          <RcStep completed={templateSettingCompleted}>
-            {
-              templateSettingCompleted ? (
-                <RcStepButton onClick={() => setActiveStep(2)}>
-                  Set Template
-                </RcStepButton>
-              ) : (
-                <RcStepLabel>
-                  Set Template
+                  Set Forms
                 </RcStepLabel>
               )
             }
@@ -158,6 +170,27 @@ export function App({ integrationHelper, client }) {
             setActiveStep={setActiveStep}
             authorized={authorized}
             userInfo={userInfo}
+            forms={forms}
+            onDeleteForm={(formId) => setForms(forms.filter(form => form.formId !== formId))}
+            onSaveFormInputs={async (formInputs) => {
+              try {
+                setLoading(true);
+                const newForms = await client.getForms(formInputs);
+                setForms(mergeForms(forms, newForms));
+                setLoading(false);
+                return true;
+              } catch (e) {
+                console.error(e);
+                setLoading(false);
+                if (e.message === 'Unauthorized') {
+                  setError('Authorization required.');
+                  setAuthorized(false);
+                } else {
+                  setError('Fetch data error please retry later');
+                }
+                return false;
+              }
+            }}
             onLogin={() => {
               setLoading(true);
               integrationHelper.openWindow(client.authPageUri);

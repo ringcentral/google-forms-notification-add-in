@@ -1,21 +1,14 @@
 const TOKEN_STORAGE_KEY = 'jwt-token-storage-key';
 
+
+function getFormIdFromLink(formLink) {
+  const formUrl = formLink.split('?')[0].replace('/edit', '');
+  return formUrl.split('/').pop();
+}
+
 export class Client {
   constructor(config) {
     this._config = config;
-  }
-
-  async getUserInfo() {
-    const response = await fetch(`${this._config.getUserInfoUri}?token=${this.token}&&rcWebhookUri=${this._config.rcWebhookUri}`);
-    if (response.status === 401) {
-      this.cleanToken();
-      throw new Error('Unauthorized');
-    }
-    if (response.status !== 200) {
-      throw new Error('Fetch data error please retry later')
-    }
-    const data = await response.json();
-    return data;
   }
 
   async authorize(callbackUri) {
@@ -38,22 +31,6 @@ export class Client {
     }
   }
 
-  async subscribe() {
-    const response = await fetch(this._config.subscribeUri, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token: this.token,
-        rcWebhookUri: this._config.rcWebhookUri
-      }),
-    });
-    if (response.status !== 200) {
-      throw new Error('Subscription error');
-    }
-  }
-
   async logout() {
     const resp = await fetch(this._config.authRevokeUri, {
       method: 'POST',
@@ -71,6 +48,52 @@ export class Client {
     this.cleanToken();
   }
 
+  async getUserInfo() {
+    const response = await fetch(`${this._config.getUserInfoUri}?token=${this.token}&&rcWebhookUri=${this._config.rcWebhookUri}`);
+    if (response.status === 401) {
+      this.cleanToken();
+      throw new Error('Unauthorized');
+    }
+    if (response.status !== 200) {
+      throw new Error('Fetch data error please retry later')
+    }
+    const data = await response.json();
+    return data;
+  }
+
+  async getForms(formLinks) {
+    if (!formLinks || !formLinks.length) {
+      return null;
+    }
+    const formIds = formLinks.map(getFormIdFromLink);
+    const response = await fetch(`${this._config.getFormDataUri}?token=${this.token}&&formIds=${formIds.join(',')}`);
+    if (response.status === 401) {
+      this.cleanToken();
+      throw new Error('Unauthorized');
+    }
+    if (response.status !== 200) {
+      throw new Error('Fetch data error please retry later')
+    }
+    const data = await response.json();
+    return data.forms;
+  }
+
+  async subscribe() {
+    const response = await fetch(this._config.subscribeUri, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        token: this.token,
+        rcWebhookUri: this._config.rcWebhookUri
+      }),
+    });
+    if (response.status !== 200) {
+      throw new Error('Subscription error');
+    }
+  }
+
   get authorized() {
     return !!this.token;
   }
@@ -86,5 +109,4 @@ export class Client {
   get token() {
     return localStorage.getItem(TOKEN_STORAGE_KEY);
   }
-
 }

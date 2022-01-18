@@ -11,6 +11,7 @@ async function setup(req, res) {
         rcWebhookUri,
         authPageUri: `${process.env.APP_SERVER}${constants.route.forClient.OPEN_AUTH_PAGE}`,
         getUserInfoUri: `${process.env.APP_SERVER}${constants.route.forClient.GET_USER_INFO}`,
+        getFormDataUri: `${process.env.APP_SERVER}${constants.route.forClient.GET_FORM_DATA}`,
         generateTokenUri: `${process.env.APP_SERVER}${constants.route.forClient.GENERATE_TOKEN}`,
         authRevokeUri: `${process.env.APP_SERVER}${constants.route.forClient.REVOKE_TOKEN}`,
         subscribeUri : `${process.env.APP_SERVER}${constants.route.forClient.SUBSCRIBE}`

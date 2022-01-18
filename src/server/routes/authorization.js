@@ -59,8 +59,9 @@ async function getUserInfo(req, res) {
 async function generateToken(req, res) {
   const oauthApp = getOAuthApp();
   const result = await oauthApp.code.getToken(req.body.callbackUri);
+  console.log(result);
   const { accessToken, refreshToken, expires } = result;
-  if (!accessToken || !refreshToken) {
+  if (!accessToken) {
     res.status(403);
     res.send('Params error');
     return;
