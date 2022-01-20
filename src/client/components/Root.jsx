@@ -13,6 +13,8 @@ import { styled } from '@ringcentral/juno/foundation';
 import { AuthorizationPanel } from './AuthorizationPanel';
 import { FormSelectionPanel } from './FormSelectionPanel';
 
+const GOOGLE_FORM_LINK_REGEXP = /^https:\/\/docs.google.com\/forms\/d\/[a-zA-Z0-9_.-]+\/edit/
+
 function mergeForms(oldForms, newForms) {
   const forms = [];
   const formsMap = {};
@@ -37,6 +39,10 @@ const Container = styled.div`
   align-items: center;
 `;
 
+const StyledStepper = styled(RcStepper)`
+  padding-bottom: 15px;
+`;
+
 function StepContent({
   activeStep,
   setActiveStep,
@@ -47,6 +53,8 @@ function StepContent({
   forms,
   onSaveFormInputs,
   onDeleteForm,
+  formInputs,
+  setFormInputs
 }) {
   if (activeStep === 1) {
     return (
@@ -54,6 +62,8 @@ function StepContent({
         forms={forms}
         onDeleteForm={onDeleteForm}
         onSaveFormInputs={onSaveFormInputs}
+        formInputs={formInputs}
+        setFormInputs={setFormInputs}
         gotoNextStep={() => setActiveStep(2)}
       />
     );
@@ -80,8 +90,8 @@ export function App({ integrationHelper, client }) {
 
   const [authorized, setAuthorized] = useState(client.authorized);
   const [userInfo, setUserInfo] = useState({});
-  const [subscribed, setSubscribed] = useState(false);
   const [forms, setForms] = useState([]);
+  const [formInputs, setFormInputs] = useState([]);
 
   // Listen authorized state to load webhook data:
   useEffect(() => {
@@ -93,6 +103,8 @@ export function App({ integrationHelper, client }) {
     });
     if (!authorized) {
       setUserInfo({});
+      setForms([]);
+      setFormInputs([]);
       setAuthorizationCompleted(false);
       return;
     }
@@ -103,6 +115,9 @@ export function App({ integrationHelper, client }) {
         const { user: userInfo } = await client.getUserInfo();
         if (userInfo) {
           setUserInfo(userInfo);
+        }
+        if (forms.length === 0) {
+          setFormInputs([{ id: 0, value: '', error: '' }]);
         }
       } catch (e) {
         console.error(e);
@@ -116,15 +131,23 @@ export function App({ integrationHelper, client }) {
       setLoading(false);
     }
     getInfo();
-  }, [authorized, subscribed]);
+  }, [authorized]);
 
   useEffect(() => {
-    if (forms.length > 0) {
-      setFormSelectionCompleted(true);
-    } else {
-      setFormSelectionCompleted(false);
+    if (forms.length === 0 && formInputs.length === 0) {
+      setFormInputs([{ id: 0, value: '', error: '' }]);
     }
   }, [forms]);
+
+  useEffect(() => {
+    if (forms.length > 0 && formInputs.length === 0) {
+      setFormSelectionCompleted(true);
+      integrationHelper.send({ canSubmit: true });
+    } else {
+      setFormSelectionCompleted(false);
+      integrationHelper.send({ canSubmit: false });
+    }
+  }, [forms, formInputs]);
 
   return (
     <RcThemeProvider>
@@ -136,7 +159,7 @@ export function App({ integrationHelper, client }) {
             </RcAlert>
           ) : null
         }
-        <RcStepper activeStep={activeStep}>
+        <StyledStepper activeStep={activeStep}>
           <RcStep completed={authorizationCompleted}>
             {
               authorizationCompleted ? (
@@ -163,7 +186,7 @@ export function App({ integrationHelper, client }) {
               )
             }
           </RcStep>
-        </RcStepper>
+        </StyledStepper>
         <Container>
           <StepContent
             activeStep={activeStep}
@@ -172,13 +195,27 @@ export function App({ integrationHelper, client }) {
             userInfo={userInfo}
             forms={forms}
             onDeleteForm={(formId) => setForms(forms.filter(form => form.formId !== formId))}
-            onSaveFormInputs={async (formInputs) => {
+            formInputs={formInputs}
+            setFormInputs={setFormInputs}
+            onSaveFormInputs={async () => {
+              const validatedFormInput = formInputs.map((formInput) => {
+                const validated = GOOGLE_FORM_LINK_REGEXP.test(formInput.value);
+                if (!validated) {
+                  return { ...formInput, error: 'Please input a valid Google Form edit URL' };
+                }
+                return formInput;
+              });
+              const formInputsWithError = validatedFormInput.filter((formInput) => !!formInput.error);
+              if (formInputsWithError.length > 0) {
+                setFormInputs(validatedFormInput);
+                return;
+              }
               try {
                 setLoading(true);
-                const newForms = await client.getForms(formInputs);
+                const newForms = await client.getForms(formInputs.map((formInput) => formInput.value));
                 setForms(mergeForms(forms, newForms));
+                setFormInputs([]);
                 setLoading(false);
-                return true;
               } catch (e) {
                 console.error(e);
                 setLoading(false);
@@ -188,7 +225,6 @@ export function App({ integrationHelper, client }) {
                 } else {
                   setError('Fetch data error please retry later');
                 }
-                return false;
               }
             }}
             onLogin={() => {

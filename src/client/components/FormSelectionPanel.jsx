@@ -1,15 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { RcButton, RcTextField, RcText, RcIcon, RcIconButton, RcTypography, RcDialog, RcDialogContent, RcDialogActions } from '@ringcentral/juno';
 import { Add, Delete, InfoBorder } from '@ringcentral/juno/icon';
 
 import { styled } from '@ringcentral/juno/foundation';
 
-const GOOGLE_FORM_LINK_REGEXP = /^https:\/\/docs.google.com\/forms\/d\/[a-zA-Z0-9_.-]+\/edit/
-
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 10px;
+  padding: 0 10px;
   width: 100%;
   align-items: baseline;
 `;
@@ -41,9 +39,14 @@ const Label = styled(RcText)`
   font-size: 13px;
 `;
 
-const SaveButtonLine = styled.div`
-  text-align: right;
+const BottomButtonGroup = styled.div`
   width: 100%;
+  display: flex;
+  flex-direction: row;
+`;
+
+const AddFormButtonWrapper = styled.div`
+  flex: 1;
 `;
 
 const FormLine = styled.div`
@@ -51,7 +54,6 @@ const FormLine = styled.div`
   display: flex;
   flex-direction: row;
   width: 100%;
-  padding-left: 5px;
   &: hover {
     background-color: #f5f5f5;
   }
@@ -133,13 +135,9 @@ export function FormSelectionPanel({
   forms,
   onSaveFormInputs,
   onDeleteForm,
+  formInputs,
+  setFormInputs,
 }) {
-  const [formInputs, setFormInputs] = useState(forms.length > 0 ? [] : [{ id: 0, value: '', error: '' }]);
-  useEffect(() => {
-    if (forms.length === 0 && formInputs.length === 0) {
-      setFormInputs([{ id: 0, value: '', error: '' }]);
-    }
-  }, [forms]);
   return (
     <Container>
       {
@@ -168,7 +166,7 @@ export function FormSelectionPanel({
               });
               setFormInputs(newFormInputs);
             }}
-            showDelete={formInputs.length > 1}
+            showDelete={formInputs.length > 1 || forms.length > 0}
             onDelete={() => {
               const newFormInputs = formInputs.filter((newFormInput) => newFormInput.id !== formInput.id);
               setFormInputs(newFormInputs);
@@ -177,44 +175,29 @@ export function FormSelectionPanel({
           />
         ))
       }
-      <AddButton
-        variant="plain"
-        startIcon={<RcIcon symbol={Add} />}
-        onClick={() => {
-          let newId = formInputs.length > 0 ? formInputs[formInputs.length - 1].id + 1 : 0;
-          setFormInputs([...formInputs, { id: newId, value: '', error: null }]);
-        }}
-      >
-        Add additional form
-      </AddButton>
-      {
-        formInputs.length > 0 ? (
-          <SaveButtonLine>
+      <BottomButtonGroup>
+        <AddFormButtonWrapper>
+          <AddButton
+            variant="plain"
+            startIcon={<RcIcon symbol={Add} />}
+            onClick={() => {
+              let newId = formInputs.length > 0 ? formInputs[formInputs.length - 1].id + 1 : 0;
+              setFormInputs([...formInputs, { id: newId, value: '', error: null }]);
+            }}
+          >
+            Add additional form
+          </AddButton>
+        </AddFormButtonWrapper>
+        {
+          formInputs.length > 0 ? (
             <SubmitButton
-              onClick={async () => {
-                const validatedFormInput = formInputs.map((formInput) => {
-                  const validated = GOOGLE_FORM_LINK_REGEXP.test(formInput.value);
-                  if (!validated) {
-                    return { ...formInput, error: 'Please input a valid Google Form edit URL' };
-                  }
-                  return formInput;
-                });
-                const formInputsWithError = validatedFormInput.filter((formInput) => !!formInput.error);
-                if (formInputsWithError.length > 0) {
-                  setFormInputs(validatedFormInput);
-                  return;
-                }
-                const result = await onSaveFormInputs(formInputs.map((formInput) => formInput.value));
-                if (result) {
-                  setFormInputs([]);
-                }
-              }}
+              onClick={onSaveFormInputs}
             >
               Save
             </SubmitButton>
-          </SaveButtonLine>
-        ) : null
-      }
+          ) : null
+        }
+      </BottomButtonGroup>
     </Container>
   );
 }
