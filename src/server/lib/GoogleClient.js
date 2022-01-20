@@ -10,9 +10,10 @@ class GoogleClient {
     this._token = token;
   }
 
-  revokeToken() {
+  revokeToken(refreshToken) {
+    const token = refreshToken || this._token;
     return axios({
-      url: `https://oauth2.googleapis.com/revoke?token=${this._token}`,
+      url: `https://oauth2.googleapis.com/revoke?token=${token}`,
       method: 'POST',
       headers: {
         'Content-type': 'application/x-www-form-urlencoded'

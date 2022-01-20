@@ -20,7 +20,7 @@ exports.Subscription = sequelize.define('subscriptions', {
   messageReceivedAt: {
     type: Sequelize.DATE,
   },
-  watchedExpiredAt: {
+  watchExpiredAt: {
     type: Sequelize.DATE,
   },
   watchType: {

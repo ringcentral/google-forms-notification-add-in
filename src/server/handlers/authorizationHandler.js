@@ -42,7 +42,7 @@ async function onUnauthorize(userId) {
       await googleClient.deleteWatch(subscription.formId, subscription.id)
       await subscription.destroy();
     }));
-    await googleClient.revokeToken();
+    await googleClient.revokeToken(user.refreshToken);
     user.accessToken = '';
     user.refreshToken = '';
     await user.save();

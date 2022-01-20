@@ -99,6 +99,10 @@ async function subscribe(req, res) {
     return;
   }
   formIds = formIds.split(',');
+  if (formIds.length > 10) {
+    res.status(400);
+    res.send('Max 10 forms');
+  }
   // create webhook notification subscription
   try {
     // get existing user

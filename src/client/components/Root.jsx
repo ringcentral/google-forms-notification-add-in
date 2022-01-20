@@ -144,15 +144,18 @@ export function App({ integrationHelper, client }) {
   useEffect(() => {
     // Listen RingCentral app submit event to submit data to server
     integrationHelper.on('submit', async () => {
+      setLoading(true);
       const formIds = forms.map(form => form.formId);
       try {
         await client.subscribe(formIds);
         setSubscribedFormIds(formIds);
+        setLoading(false);
         return {
           status: true,
         };
       } catch (e) {
         console.error(e);
+        setLoading(false);
         return {
           status: false,
         };
@@ -256,6 +259,10 @@ export function App({ integrationHelper, client }) {
               const formInputsWithError = validatedFormInput.filter((formInput) => !!formInput.error);
               if (formInputsWithError.length > 0) {
                 setFormInputs(validatedFormInput);
+                return;
+              }
+              if (formInputs.length + forms.length > 10) {
+                setError('Maximum 10 forms allowed.');
                 return;
               }
               try {

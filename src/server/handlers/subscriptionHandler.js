@@ -16,16 +16,17 @@ async function onSubscribe(user, rcWebhookUri, formIds) {
     if (existedSubscription) {
       updateSubscriptionMap[existedSubscription.id] = 1;
       const { expireTime } = await googleClient.renewWatch(formId, existedSubscription.id);
-      existedSubscription.watchExpiredAt = expireTime;
+      existedSubscription.watchExpiredAt = new Date(expireTime);
       await existedSubscription.save();
     } else {
-      const { id, expireTime } = await googleClient.createWatch(formId);
+      const { id, expireTime, createTime } = await googleClient.createWatch(formId);
       await Subscription.create({
         id,
         userId: user.id,
         formId: formId,
         rcWebhookUri: rcWebhookUri,
-        watchExpiredAt: expireTime,
+        watchExpiredAt: new Date(expireTime),
+        messageReceivedAt: new Date(createTime),
       });
     }
   }));
