@@ -31,6 +31,11 @@ function mergeForms(oldForms, newForms) {
   return forms;
 }
 
+function getFormIdFromLink(formLink) {
+  const formUrl = formLink.split('?')[0].replace('/edit', '');
+  return formUrl.split('/').pop();
+}
+
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -82,9 +87,7 @@ function StepContent({
 export function App({ integrationHelper, client }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [activeStep, setActiveStep] = useState(
-    client.authorized ? 1 : 0
-  );
+  const [activeStep, setActiveStep] = useState(0);
   const [authorizationCompleted, setAuthorizationCompleted] = useState(false);
   const [formSelectionCompleted, setFormSelectionCompleted] = useState(false);
 
@@ -92,33 +95,38 @@ export function App({ integrationHelper, client }) {
   const [userInfo, setUserInfo] = useState({});
   const [forms, setForms] = useState([]);
   const [formInputs, setFormInputs] = useState([]);
+  const [subscribedFormIds, setSubscribedFormIds] = useState([]);
 
   // Listen authorized state to load webhook data:
   useEffect(() => {
-    // Listen RingCentral app submit event to submit data to server
-    integrationHelper.on('submit', async (e) => {
-      return {
-        status: true,
-      }
-    });
     if (!authorized) {
       setUserInfo({});
       setForms([]);
       setFormInputs([]);
       setAuthorizationCompleted(false);
+      setFormSelectionCompleted(false);
+      setActiveStep(0);
       return;
     }
     setAuthorizationCompleted(true);
     async function getInfo() {
       setLoading(true);
       try {
-        const { user: userInfo } = await client.getUserInfo();
+        const { user: userInfo, formIds } = await client.getUserInfo();
         if (userInfo) {
           setUserInfo(userInfo);
         }
-        if (forms.length === 0) {
-          setFormInputs([{ id: 0, value: '', error: '' }]);
+        if (formIds && formIds.length > 0) {
+          setSubscribedFormIds(formIds);
+          const newForms = await client.getForms(formIds);
+          setForms(newForms);
         }
+        if (!formIds || formIds.length === 0) {
+          setFormInputs([{ id: 0, value: '', error: '' }]);
+        } else {
+          setFormInputs([]);
+        }
+        setActiveStep(1);
       } catch (e) {
         console.error(e);
         if (e.message === 'Unauthorized') {
@@ -134,10 +142,32 @@ export function App({ integrationHelper, client }) {
   }, [authorized]);
 
   useEffect(() => {
+    // Listen RingCentral app submit event to submit data to server
+    integrationHelper.on('submit', async () => {
+      const formIds = forms.map(form => form.formId);
+      try {
+        await client.subscribe(formIds);
+        setSubscribedFormIds(formIds);
+        return {
+          status: true,
+        };
+      } catch (e) {
+        console.error(e);
+        return {
+          status: false,
+        };
+      }
+    });
+    return () => {
+      integrationHelper.dispose();
+    };
+  }, [forms]);
+
+  useEffect(() => {
     if (forms.length === 0 && formInputs.length === 0) {
       setFormInputs([{ id: 0, value: '', error: '' }]);
     }
-  }, [forms]);
+  }, [authorized, forms]);
 
   useEffect(() => {
     if (forms.length > 0 && formInputs.length === 0) {
@@ -194,7 +224,25 @@ export function App({ integrationHelper, client }) {
             authorized={authorized}
             userInfo={userInfo}
             forms={forms}
-            onDeleteForm={(formId) => setForms(forms.filter(form => form.formId !== formId))}
+            onDeleteForm={async (formId) => {
+              setLoading(true);
+              try {
+                if (subscribedFormIds.indexOf(formId) !== -1) {
+                  await client.deleteSubscription(formId);
+                }
+                setLoading(false);
+              } catch (e) {
+                if (e.message === 'Unauthorized') {
+                  setError('Authorization required.');
+                  setAuthorized(false);
+                } else {
+                  setError('Delete form error please retry later');
+                }
+                setLoading(false);
+                return;
+              }
+              setForms(forms.filter(form => form.formId !== formId))
+            }}
             formInputs={formInputs}
             setFormInputs={setFormInputs}
             onSaveFormInputs={async () => {
@@ -212,7 +260,7 @@ export function App({ integrationHelper, client }) {
               }
               try {
                 setLoading(true);
-                const newForms = await client.getForms(formInputs.map((formInput) => formInput.value));
+                const newForms = await client.getForms(formInputs.map((formInput) => getFormIdFromLink(formInput.value)));
                 setForms(mergeForms(forms, newForms));
                 setFormInputs([]);
                 setLoading(false);

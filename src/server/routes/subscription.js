@@ -1,6 +1,6 @@
 const { decodeJwt } = require('../lib/jwt');
 const { User } = require('../models/userModel');
-const { onSubscribe } = require('../handlers/subscriptionHandler');
+const { onSubscribe, onDeleteSubscription } = require('../handlers/subscriptionHandler');
 const { GoogleClient } = require('../lib/googleClient');
 const { checkAndRefreshAccessToken } = require('../lib/oauth');
 
@@ -59,12 +59,15 @@ async function getFormData(req, res) {
       res.send('Unauthorized.');
       return;
     }
-    console.error(e && e.message);
+    console.error(e);
     res.status(500);
     res.send('Internal error');
   }
 }
 
+function checkHttpOrHttps(link) {
+  return link.indexOf('http://') === 0 || link.indexOf('https://') === 0;
+}
 
 async function subscribe(req, res) {
   // validate jwt
@@ -83,41 +86,106 @@ async function subscribe(req, res) {
 
   // check for rcWebhookUri
   const rcWebhookUri = req.body.rcWebhookUri;
-  if (!rcWebhookUri) {
+  if (!rcWebhookUri || !checkHttpOrHttps(rcWebhookUri)) {
     res.status(400);
-    res.send('Missing rcWebhookUri');
+    res.send('Invalid rcWebhookUri');
     return;
   }
 
-  // get existing user
-  const userId = decodedToken.id;
-  const user = await User.findByPk(userId.toString());
-  if (!user) {
-    res.status(401);
-    res.send('Unknown user');
+  let formIds = req.body.formIds;
+  if (!formIds || formIds.length === 0) {
+    res.status(400);
+    res.send('Invalid formIds');
     return;
   }
-
+  formIds = formIds.split(',');
   // create webhook notification subscription
   try {
-    await onSubscribe(user, rcWebhookUri);
+    // get existing user
+    const userId = decodedToken.id;
+    const user = await User.findByPk(userId.toString());
+    if (!user) {
+      res.status(401);
+      res.send('Unknown user');
+      return;
+    }
+    await checkAndRefreshAccessToken(user);
+    await onSubscribe(user, rcWebhookUri, formIds);
     res.status(200);
     res.json({
       result: 'ok'
     });
   }
   catch (e) {
-    console.error(e);
     if (e.response && e.response.status === 401) {
       res.status(401);
       res.send('Unauthorized');
       return;
     }
+    console.error(e);
     res.status(500);
     res.send('Internal server error');
     return;
   }
 }
 
+
+async function deleteSubscription(req, res) {
+  const jwtToken = req.body.token;
+  if (!jwtToken) {
+    res.status(403);
+    res.send('Params invalid.');
+    return;
+  }
+  const decodedToken = decodeJwt(jwtToken);
+  if (!decodedToken) {
+    res.status(401);
+    res.send('Token invalid');
+    return;
+  }
+
+  // check for rcWebhookUri
+  const rcWebhookUri = req.body.rcWebhookUri;
+  if (!rcWebhookUri) {
+    res.status(400);
+    res.send('Invalid rcWebhookUri');
+    return;
+  }
+
+  let formId = req.body.formId;
+  if (!formId) {
+    res.status(400);
+    res.send('Invalid formId');
+    return;
+  }
+
+  try {
+    const userId = decodedToken.id;
+    const user = await User.findByPk(userId.toString());
+    if (!user) {
+      res.status(401);
+      res.json()
+      return;
+    }
+    await checkAndRefreshAccessToken(user);
+    // remove webhook notification subscription
+    await onDeleteSubscription(user, rcWebhookUri, formId);
+    res.status(200);
+    res.json({
+      result: 'ok'
+    });
+  } catch (e) {
+    if (e.response && e.response.status === 401) {
+      res.status(401);
+      res.send('Unauthorized');
+      return;
+    }
+    console.error(e);
+    res.status(500);
+    res.send('Internal server error');
+  }
+}
+
 exports.subscribe = subscribe;
 exports.getFormData = getFormData;
+exports.deleteSubscription = deleteSubscription;

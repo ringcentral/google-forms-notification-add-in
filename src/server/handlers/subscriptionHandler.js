@@ -1,29 +1,49 @@
-const constants = require('../lib/constants');
+const { GoogleClient } = require('../lib/GoogleClient');
 const { Subscription } = require('../models/subscriptionModel');
-const { generate } = require('shortid');
 
-async function onSubscribe(user, rcWebhookUri) {
-  // Generate an unique id
-  // Note: notificationCallbackUrl here would contain our subscriptionId so that incoming notifications can be identified
-  const subscriptionId = generate();
-  const notificationCallbackUrl = `${process.env.APP_SERVER}${constants.route.forThirdParty.NOTIFICATION}?subscriptionId=${subscriptionId}`;
-
-  // Step.1: [INSERT]Create a new webhook subscription on 3rd party platform with their API. For most cases, you would want to define what resources/events you want to subscribe to as well.
-
-  // Step.2: Get data from webhook creation response.
-  const webhookData = { thirdPartySubscriptionId: "testSubId" };   // [REPLACE] this with actual API call to 3rd party platform to create a webhook subscription
-
-  // Step.3: Create new subscription in DB. Note: If up till now, it's running correctly, most likely your RingCentral App conversation will receive message in the form of Adaptive Card (exception: Asana - more info: try asana demo with 'npx ringcentral-add-in-framework demo')
-  await Subscription.create({
-    id: subscriptionId,
-    userId: user.id,
-    rcWebhookUri: rcWebhookUri,
-    thirdPartyWebhookId: webhookData.thirdPartySubscriptionId   // [REPLACE] this with webhook subscription id from 3rd party platform response
+async function onSubscribe(user, rcWebhookUri, formIds) {
+  const existedSubscriptions = await Subscription.findAll({
+    where: {
+      userId: user.id,
+      formId: formIds,
+      rcWebhookUri: rcWebhookUri,
+    }
   });
+  const googleClient = new GoogleClient({ token: user.accessToken });
+  const updateSubscriptionMap = {};
+  await Promise.all(formIds.map(async (formId) => {
+    const existedSubscription = existedSubscriptions.find((subscription) => subscription.formId === formId);
+    if (existedSubscription) {
+      updateSubscriptionMap[existedSubscription.id] = 1;
+      const { expireTime } = await googleClient.renewWatch(formId, existedSubscription.id);
+      existedSubscription.watchExpiredAt = expireTime;
+      await existedSubscription.save();
+    } else {
+      const { id, expireTime } = await googleClient.createWatch(formId);
+      await Subscription.create({
+        id,
+        userId: user.id,
+        formId: formId,
+        rcWebhookUri: rcWebhookUri,
+        watchExpiredAt: expireTime,
+      });
+    }
+  }));
+} 
 
-
-  //If it's all good here, a Notification Card will be sent to your installed chat
-
+async function onDeleteSubscription(user, rcWebhookUri, formId) {
+  const subscriptions = await Subscription.findAll({
+    where: {
+      userId: user.id,
+      formId: formId,
+      rcWebhookUri: rcWebhookUri,
+    }
+  });
+  const googleClient = new GoogleClient({ token: user.accessToken });
+  await Promise.all(subscriptions.map(async (subscription) => {
+    await googleClient.deleteWatch(formId, subscription.id)
+    await subscription.destroy();
+  }));
 }
-
 exports.onSubscribe = onSubscribe;
+exports.onDeleteSubscription = onDeleteSubscription;

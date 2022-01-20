@@ -1,11 +1,5 @@
 const TOKEN_STORAGE_KEY = 'jwt-token-storage-key';
 
-
-function getFormIdFromLink(formLink) {
-  const formUrl = formLink.split('?')[0].replace('/edit', '');
-  return formUrl.split('/').pop();
-}
-
 export class Client {
   constructor(config) {
     this._config = config;
@@ -61,11 +55,10 @@ export class Client {
     return data;
   }
 
-  async getForms(formLinks) {
-    if (!formLinks || !formLinks.length) {
+  async getForms(formIds) {
+    if (!formIds || !formIds.length) {
       return null;
     }
-    const formIds = formLinks.map(getFormIdFromLink);
     const response = await fetch(`${this._config.getFormDataUri}?token=${this.token}&&formIds=${formIds.join(',')}`);
     if (response.status === 401) {
       this.cleanToken();
@@ -78,7 +71,7 @@ export class Client {
     return data.forms;
   }
 
-  async subscribe() {
+  async subscribe(formIds) {
     const response = await fetch(this._config.subscribeUri, {
       method: 'POST',
       headers: {
@@ -86,11 +79,37 @@ export class Client {
       },
       body: JSON.stringify({
         token: this.token,
-        rcWebhookUri: this._config.rcWebhookUri
+        rcWebhookUri: this._config.rcWebhookUri,
+        formIds: formIds.join(','),
       }),
     });
+    if (response.status === 401) {
+      this.cleanToken();
+      throw new Error('Unauthorized');
+    }
     if (response.status !== 200) {
       throw new Error('Subscription error');
+    }
+  }
+
+  async deleteSubscription(formId) {
+    const response = await fetch(this._config.subscribeUri, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        token: this.token,
+        rcWebhookUri: this._config.rcWebhookUri,
+        formId: formId,
+      }),
+    });
+    if (response.status === 401) {
+      this.cleanToken();
+      throw new Error('Unauthorized');
+    }
+    if (response.status !== 200) {
+      throw new Error('Delete subscription error');
     }
   }
 

@@ -18,7 +18,8 @@ function getOAuthApp() {
 
 async function checkAndRefreshAccessToken(user) {
   const dateNow = new Date();
-  if (user && user.accessToken && user.refreshToken && user.tokenExpiredAt > dateNow) {
+  if (user && user.accessToken && user.refreshToken && user.tokenExpiredAt < dateNow) {
+    console.log('refreshing token');
     const token = oauthApp.createToken(user.accessToken, user.refreshToken);
     const { accessToken, refreshToken, expires } = await token.refresh();
     user.accessToken = accessToken;

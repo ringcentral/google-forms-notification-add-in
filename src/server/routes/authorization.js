@@ -41,9 +41,31 @@ async function getUserInfo(req, res) {
     res.send('Token invalid.');
     return;
   }
-  // check token refresh condition
-  await checkAndRefreshAccessToken(user);
-
+  try {
+    // check token refresh condition
+    await checkAndRefreshAccessToken(user);
+    console.log('accessToken: ', user.accessToken);
+  } catch (e) {
+    if (e.response && e.response.status === 401) {
+      if (user) {
+        user.accessToken = '';
+        user.refreshToken = '';
+        await user.save();
+      }
+      res.status(401);
+      res.send('Unauthorized.');
+      return;
+    }
+    console.error(e);
+    res.status(500);
+    res.send('Internal error');
+  }
+  const subscriptions = await Subscription.findAll({
+    where: {
+      userId: user.id,
+      rcWebhookUri: rcWebhookUri,
+    }
+  });
   // const subscription = await Subscription.findOne({
   //   where: {
   //     rcWebhookUri: rcWebhookUri
@@ -52,7 +74,8 @@ async function getUserInfo(req, res) {
   res.json({
     user: {
       name: user.name,
-    }
+    },
+    formIds: subscriptions.map(subscription => subscription.formId),
   });
 }
 

@@ -17,19 +17,23 @@ const LoginInfo = styled.div`
   padding: 20px 0;
 `;
 
+const LoginTitle = styled(RcTypography)`
+  margin-top: 10px;
+`;
+
 function LoginPanel({
   onLogin,
 }) {
   return (
     <Fragment>
-      <RcTypography
+      <LoginTitle
         color="textPrimary"
         variant="subheading1"
         paragraph
         display="block"
       >
         To begin, please connect your Google account.
-      </RcTypography>
+      </LoginTitle>
       <br />
       <RcButton onClick={onLogin}>
         Connect to Google Forms
@@ -53,7 +57,7 @@ function UserCenter({
         <RcText variant="subheading2">
           {userInfo.name}
         </RcText>
-      </LoginInfo>  
+      </LoginInfo>
       <ButtonGroup>
         <RcButton
           variant="outlined"
@@ -72,7 +76,7 @@ function UserCenter({
         onClose={() => setConfirmModalOpened(false)}
       >
         <RcDialogContent>
-          <RcTypography>Are you sure to unauthorize?</RcTypography>
+          <RcTypography>Are you sure to unauthorize? All notifications subscribed with this account will be stopped.</RcTypography>
         </RcDialogContent>
         <RcDialogActions>
           <RcButton variant="outlined" onClick={() => setConfirmModalOpened(false)}>

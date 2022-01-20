@@ -1,16 +1,12 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('./sequelize');
-const { generate } = require('shortid');
 
 // Model for Subscription data
 exports.Subscription = sequelize.define('subscriptions', {
+  // Google Form watch Id
   id: {
     type: Sequelize.STRING,
     primaryKey: true,
-    default: generate,
-  },
-  watchId:{
-    type: Sequelize.STRING,
   },
   formId: {
     type: Sequelize.STRING,
@@ -21,7 +17,18 @@ exports.Subscription = sequelize.define('subscriptions', {
   rcWebhookUri:{
     type: Sequelize.STRING
   },
-  template: {
+  messageReceivedAt: {
+    type: Sequelize.DATE,
+  },
+  watchedExpiredAt: {
+    type: Sequelize.DATE,
+  },
+  watchType: {
     type: Sequelize.STRING,
+    defaultValue: 'RESPONSES',
+  },
+  active: {
+    type: Sequelize.BOOLEAN,
+    defaultValue: true
   }
 });

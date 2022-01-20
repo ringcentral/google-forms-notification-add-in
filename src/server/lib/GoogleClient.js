@@ -43,7 +43,7 @@ class GoogleClient {
 
   async createWatch(formId) {
     const response = await this.requestWithToken(
-      `${this._apiServer}/v1beta/forms/${formId}/responses/${responseId}/watches`,
+      `${this._apiServer}/v1beta/forms/${formId}/watches`,
       'POST',
       {
         watch: {

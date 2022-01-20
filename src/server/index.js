@@ -21,6 +21,7 @@ exports.appExtend = (app) => {
   app.post(constants.route.forClient.REVOKE_TOKEN, authorizationRoute.revokeToken);
   // configure
   app.post(constants.route.forClient.SUBSCRIBE, subscriptionRoute.subscribe);
+  app.delete(constants.route.forClient.SUBSCRIBE, subscriptionRoute.deleteSubscription);
   app.get(constants.route.forClient.GET_FORM_DATA, subscriptionRoute.getFormData);
   // notification
   app.post(constants.route.forThirdParty.NOTIFICATION, notificationRoute.notification);
