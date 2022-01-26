@@ -1,38 +1,54 @@
+const { User } = require('../models/userModel');
 const { sendAdaptiveCardMessage } = require('../lib/messageHelper');
+const { checkAndRefreshAccessToken } = require('../lib/oauth');
+const { formatGoogleFormResponse } = require('../lib/formatGoogleFormResponse');
+const { GoogleClient } = require('../lib/GoogleClient');
 
-const sampleCardTemplate = require('../adaptiveCardPayloads/sample.json');
+const responseTemplate = require('../adaptiveCardPayloads/response.json');
 
-async function onReceiveNotification(notificationData, subscription, user) {
-    console.log(`Receiving notification: ${JSON.stringify(notificationData, null, 2)}`);
-    // Step.1: Extract info from 3rd party notification POST body
-    const testNotificationInfo = {    // [REPLACE] this with codes to extract relevant info from 3rd party notification request body and/or headers
-        title: "This is a test title",
-        message: "This is a test message",
-        linkToPage: "about:blank"
+function groupSubscriptionsWithUserId(subscriptions) {
+  const userIdToSubscriptions = {};
+  subscriptions.forEach(subscription => {
+    const userId = subscription.userId;
+    if (!userIdToSubscriptions[userId]) {
+      userIdToSubscriptions[userId] = [];
     }
-    // Step.2(optional): Filter out notifications that user is not interested in, some platform may not have a build-in filtering mechanism.  
+    userIdToSubscriptions[userId].push(subscription);
+  });
+  return userIdToSubscriptions;
+}
 
-    // Step.3: Transform notification info into RingCentral App adaptive card - design your own adaptive card: https://adaptivecards.io/designer/
-    // If this step is successful, go to authorization.js - revokeToken() for the last step
-    const cardData = {    // [REPLACE] this with your params that's customized to show info from 3rd party notification and provide interaction
-        title: testNotificationInfo.title,
-        content: testNotificationInfo.message,
-        link: testNotificationInfo.linkToPage,
-        subscriptionId: subscription.id
-    };
-    // Send adaptive card to your channel in RingCentral App
-    await sendAdaptiveCardMessage(
-        subscription.rcWebhookUri,
-        sampleCardTemplate,
-        cardData);
+async function onReceiveNotification(formId, subscriptions) {
+  const groupedSubscriptions = groupSubscriptionsWithUserId(subscriptions);
+  await Promise.all(Object.keys(groupedSubscriptions).map(async (userId) => {
+    const currentUserSubscriptions = groupedSubscriptions[userId];
+    const user = await User.findByPk(userId);
+    if (!user || !user.accessToken) {
+      return;
+    }
+    await checkAndRefreshAccessToken(user);
+    const googleClient = new GoogleClient({ token: user.accessToken });
+    const form = await googleClient.getForm(formId);
+    const responses = await googleClient.getFormResponses(formId);
+    const messageCards = responses.map((response) => formatGoogleFormResponse(form, response));
+    await Promise.all(messageCards.map(async messageCard => {
+      await Promise.all(currentUserSubscriptions.map(async (subscription) => {
+        await sendAdaptiveCardMessage(
+          subscription.rcWebhookUri,
+          responseTemplate,
+          messageCard,
+        );
+      }));
+    }));
+  }));
 }
 
 async function onReceiveInteractiveMessage(incomingMessageData, user) {
-    // Below tis the section for your customized actions handling
-    // testActionType is from adaptiveCard.js - getSampleCard()
-    if (incomingMessageData.action === 'testActionType') {
-        // [INSERT] API call to perform action on 3rd party platform 
-    }
+  // Below tis the section for your customized actions handling
+  // testActionType is from adaptiveCard.js - getSampleCard()
+  if (incomingMessageData.action === 'testActionType') {
+    // [INSERT] API call to perform action on 3rd party platform 
+  }
 }
 
 exports.onReceiveNotification = onReceiveNotification;

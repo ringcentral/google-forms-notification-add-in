@@ -1,0 +1,36 @@
+{
+    "type": "AdaptiveCard",
+    "body": [
+        {
+            "type": "TextBlock",
+            "text": "New response at ${formTitle}"
+        },
+        {
+            "type": "Container",
+            "$data": "${answers}",
+            "items": [
+                {
+                    "type": "TextBlock",
+                    "text": "${question}",
+                    "size": "Small",
+                    "weight": "Bolder"
+                },
+                {
+                    "type": "TextBlock",
+                    "text": "${answer}",
+                    "weight": "Default"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "type": "Action.OpenUrl",
+            "title": "Open",
+            "url": "${responseUrl}",
+            "style": "positive"
+        }
+    ],
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "version": "1.3"
+}

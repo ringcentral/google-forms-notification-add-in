@@ -15,4 +15,9 @@ const route = {
   }
 }
 
+const icon = {
+  LOGO: 'https://user-images.githubusercontent.com/7036536/150320407-709969b9-b65a-49c0-aaf2-48b5502ad35d.png',
+};
+
 exports.route = route;
+exports.icon = icon;

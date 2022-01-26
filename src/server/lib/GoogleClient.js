@@ -32,12 +32,12 @@ class GoogleClient {
     return response.data;
   }
 
-  async getResponses(formId) {
+  async getFormResponses(formId) {
     const response = await this.requestWithToken(`${this._apiServer}/v1beta/forms/${formId}/responses`, 'GET');
-    return response.data;
+    return response.data.responses;
   }
 
-  async getResponse(formId, responseId) {
+  async getFormResponse(formId, responseId) {
     const response = await this.requestWithToken(`${this._apiServer}/v1beta/forms/${formId}/responses/${responseId}`, 'GET');
     return response.data;
   }
