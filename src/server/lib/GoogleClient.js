@@ -32,8 +32,13 @@ class GoogleClient {
     return response.data;
   }
 
-  async getFormResponses(formId) {
-    const response = await this.requestWithToken(`${this._apiServer}/v1beta/forms/${formId}/responses`, 'GET');
+  async getFormResponses(formId, fromTime = null) {
+    let url = `${this._apiServer}/v1beta/forms/${formId}/responses`;
+    if (fromTime) {
+      const time = new Date(fromTime);
+      url = `${url}?filter=timestamp > ${time.toISOString()}`;
+    }
+    const response = await this.requestWithToken(url, 'GET');
     return response.data.responses;
   }
 

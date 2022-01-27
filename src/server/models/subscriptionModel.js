@@ -12,10 +12,13 @@ exports.Subscription = sequelize.define('subscriptions', {
     type: Sequelize.STRING,
   },
   userId: {
-    type: Sequelize.STRING
+    type: Sequelize.STRING,
+  },
+  rcWebhookId: {
+    type: Sequelize.STRING,
   },
   rcWebhookUri:{
-    type: Sequelize.STRING
+    type: Sequelize.STRING,
   },
   messageReceivedAt: {
     type: Sequelize.DATE,

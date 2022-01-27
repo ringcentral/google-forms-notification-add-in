@@ -3,30 +3,36 @@
     "body": [
         {
             "type": "TextBlock",
-            "text": "New response at ${formTitle}"
+            "text": "New response at [${formTitle}](${formUrl})"
         },
         {
             "type": "Container",
-            "$data": "${answers}",
             "items": [
                 {
-                    "type": "TextBlock",
-                    "text": "${question}",
-                    "size": "Small",
-                    "weight": "Bolder"
-                },
-                {
-                    "type": "TextBlock",
-                    "text": "${answer}",
-                    "weight": "Default"
+                    "type": "Container",
+                    "$data": "${answers}",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "${question}",
+                            "size": "Small",
+                            "weight": "Bolder"
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": "${answer}",
+                            "weight": "Default"
+                        }
+                    ]
                 }
-            ]
+            ],
+            "separator": true
         }
     ],
     "actions": [
         {
             "type": "Action.OpenUrl",
-            "title": "Open",
+            "title": "View Response",
             "url": "${responseUrl}",
             "style": "positive"
         }

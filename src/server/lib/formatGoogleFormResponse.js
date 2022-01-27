@@ -20,11 +20,13 @@ function getAnswers(form, response) {
 }
 
 function formatGoogleFormResponse(form, response) {
+  const formUrl = `https://docs.google.com/forms/d/${form.formId}/edit`;
   return {
     formId: form.formId,
     formTitle: form.info.title,
+    formUrl,
     responseId: response.id,
-    responseUrl: `https://docs.google.com/forms/d/${form.formId}/edit#response=${response.responseId}`,
+    responseUrl: `${formUrl}#response=${response.responseId}`,
     answers: getAnswers(form, response),
   }
 }

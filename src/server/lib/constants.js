@@ -16,7 +16,7 @@ const route = {
 }
 
 const icon = {
-  LOGO: 'https://user-images.githubusercontent.com/7036536/150320407-709969b9-b65a-49c0-aaf2-48b5502ad35d.png',
+  LOGO: 'https://user-images.githubusercontent.com/7036536/151290687-259f4a4a-4185-4013-8475-668061a20a1f.png',
 };
 
 exports.route = route;

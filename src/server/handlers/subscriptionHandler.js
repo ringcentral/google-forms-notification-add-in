@@ -1,12 +1,12 @@
 const { GoogleClient } = require('../lib/GoogleClient');
 const { Subscription } = require('../models/subscriptionModel');
 
-async function onSubscribe(user, rcWebhookUri, formIds) {
+async function onSubscribe(user, rcWebhookId, rcWebhookUri, formIds) {
   const existedSubscriptions = await Subscription.findAll({
     where: {
       userId: user.id,
       formId: formIds,
-      rcWebhookUri: rcWebhookUri,
+      rcWebhookId,
     }
   });
   const googleClient = new GoogleClient({ token: user.accessToken });
@@ -17,6 +17,8 @@ async function onSubscribe(user, rcWebhookUri, formIds) {
       updateSubscriptionMap[existedSubscription.id] = 1;
       const { expireTime } = await googleClient.renewWatch(formId, existedSubscription.id);
       existedSubscription.watchExpiredAt = new Date(expireTime);
+      existedSubscription.rcWebhookUri = rcWebhookUri;
+      existedSubscription.messageReceivedAt = new Date();
       await existedSubscription.save();
     } else {
       const { id, expireTime, createTime } = await googleClient.createWatch(formId);
@@ -24,6 +26,7 @@ async function onSubscribe(user, rcWebhookUri, formIds) {
         id,
         userId: user.id,
         formId: formId,
+        rcWebhookId: rcWebhookId,
         rcWebhookUri: rcWebhookUri,
         watchExpiredAt: new Date(expireTime),
         messageReceivedAt: new Date(createTime),

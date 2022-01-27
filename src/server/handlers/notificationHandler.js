@@ -18,7 +18,18 @@ function groupSubscriptionsWithUserId(subscriptions) {
   return userIdToSubscriptions;
 }
 
-async function onReceiveNotification(formId, subscriptions) {
+function getLastMessageReceiveTime(subscriptions) {
+  let lastMessageReceiveTime = 0;
+  subscriptions.forEach((subscription) => {
+    const time = (new Date(subscription.messageReceivedAt)).getTime();
+    if (time > lastMessageReceiveTime) {
+      lastMessageReceiveTime = time;
+    }
+  });
+  return lastMessageReceiveTime;
+}
+
+async function onReceiveNotification(formId, subscriptions, messageTime) {
   const groupedSubscriptions = groupSubscriptionsWithUserId(subscriptions);
   await Promise.all(Object.keys(groupedSubscriptions).map(async (userId) => {
     const currentUserSubscriptions = groupedSubscriptions[userId];
@@ -26,10 +37,19 @@ async function onReceiveNotification(formId, subscriptions) {
     if (!user || !user.accessToken) {
       return;
     }
-    await checkAndRefreshAccessToken(user);
+    try {
+      await checkAndRefreshAccessToken(user);
+    } catch (e) {
+      if (e.response && e.response.status === 401) {
+        user.accessToken = '';
+        await user.save();
+      }
+      console.error(e);
+      return;
+    }
     const googleClient = new GoogleClient({ token: user.accessToken });
     const form = await googleClient.getForm(formId);
-    const responses = await googleClient.getFormResponses(formId);
+    const responses = await googleClient.getFormResponses(formId, getLastMessageReceiveTime(currentUserSubscriptions));
     const messageCards = responses.map((response) => formatGoogleFormResponse(form, response));
     await Promise.all(messageCards.map(async messageCard => {
       await Promise.all(currentUserSubscriptions.map(async (subscription) => {
@@ -38,18 +58,11 @@ async function onReceiveNotification(formId, subscriptions) {
           responseTemplate,
           messageCard,
         );
+        subscription.messageReceivedAt = new Date(messageTime);
+        await subscription.save();
       }));
     }));
   }));
 }
 
-async function onReceiveInteractiveMessage(incomingMessageData, user) {
-  // Below tis the section for your customized actions handling
-  // testActionType is from adaptiveCard.js - getSampleCard()
-  if (incomingMessageData.action === 'testActionType') {
-    // [INSERT] API call to perform action on 3rd party platform 
-  }
-}
-
 exports.onReceiveNotification = onReceiveNotification;
-exports.onReceiveInteractiveMessage = onReceiveInteractiveMessage;

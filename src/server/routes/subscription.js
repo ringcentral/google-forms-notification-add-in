@@ -65,8 +65,19 @@ async function getFormData(req, res) {
   }
 }
 
-function checkHttpOrHttps(link) {
-  return link.indexOf('http://') === 0 || link.indexOf('https://') === 0;
+function getRCWebhookId(rcWebhookUri) {
+  if (
+    !rcWebhookUri ||
+    (
+      rcWebhookUri.indexOf('https://') !== 0 &&
+      rcWebhookUri.indexOf('http://') !== 0
+    )) {
+    return null;
+  }
+  const uriWithoutQuery = rcWebhookUri.split('?')[0];
+  const uriWithoutHash = uriWithoutQuery.split('#')[0];
+  const paths = uriWithoutHash.split('/');
+  return paths[paths.length - 1];
 }
 
 async function subscribe(req, res) {
@@ -86,7 +97,8 @@ async function subscribe(req, res) {
 
   // check for rcWebhookUri
   const rcWebhookUri = req.body.rcWebhookUri;
-  if (!rcWebhookUri || !checkHttpOrHttps(rcWebhookUri)) {
+  const rcWebhookId = getRCWebhookId(rcWebhookUri);
+  if (!rcWebhookId) {
     res.status(400);
     res.send('Invalid rcWebhookUri');
     return;
@@ -114,7 +126,7 @@ async function subscribe(req, res) {
       return;
     }
     await checkAndRefreshAccessToken(user);
-    await onSubscribe(user, rcWebhookUri, formIds);
+    await onSubscribe(user, rcWebhookId, rcWebhookUri, formIds);
     res.status(200);
     res.json({
       result: 'ok'
