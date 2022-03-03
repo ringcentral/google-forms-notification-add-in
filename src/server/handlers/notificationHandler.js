@@ -1,10 +1,8 @@
 const { User } = require('../models/userModel');
 const { sendAdaptiveCardMessage } = require('../lib/messageHelper');
 const { checkAndRefreshAccessToken } = require('../lib/oauth');
-const { formatGoogleFormResponse } = require('../lib/formatGoogleFormResponse');
+const { formatGoogleFormResponseIntoCard } = require('../lib/formatGoogleFormResponse');
 const { GoogleClient } = require('../lib/GoogleClient');
-
-const responseTemplate = require('../adaptiveCardPayloads/response.json');
 
 function groupSubscriptionsWithUserId(subscriptions) {
   const userIdToSubscriptions = {};
@@ -50,13 +48,12 @@ async function onReceiveNotification(formId, subscriptions, messageTime) {
     const googleClient = new GoogleClient({ token: user.accessToken });
     const form = await googleClient.getForm(formId);
     const responses = await googleClient.getFormResponses(formId, getLastMessageReceiveTime(currentUserSubscriptions));
-    const messageCards = responses.map((response) => formatGoogleFormResponse(form, response));
+    const messageCards = responses.map((response) => formatGoogleFormResponseIntoCard(form, response));
     await Promise.all(messageCards.map(async messageCard => {
       await Promise.all(currentUserSubscriptions.map(async (subscription) => {
         await sendAdaptiveCardMessage(
           subscription.rcWebhookUri,
-          responseTemplate,
-          messageCard,
+          messageCard
         );
         subscription.messageReceivedAt = new Date(messageTime);
         await subscription.save();

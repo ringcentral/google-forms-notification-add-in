@@ -2,7 +2,7 @@ const { Subscription } = require('../models/subscriptionModel');
 const { onReceiveNotification } = require('../handlers/notificationHandler');
 
 async function notification(req, res) {
-  // console.log(JSON.stringify(req.body, null, 2));
+  console.log(JSON.stringify(req.body, null, 2));
   try {
     const message = req.body.message;
     const formId = message.attributes.formId;

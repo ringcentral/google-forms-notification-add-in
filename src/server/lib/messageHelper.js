@@ -1,5 +1,4 @@
 const axios = require('axios');
-const { Template } = require('adaptivecards-templating');
 const { icon } = require('./constants');
 
 async function sendTextMessage(rcWebhook, message) {
@@ -15,11 +14,7 @@ async function sendTextMessage(rcWebhook, message) {
   });
 }
 
-async function sendAdaptiveCardMessage(rcWebhook, cardTemplate, params) {
-  const template = new Template(cardTemplate);
-  const card = template.expand({
-    $root: params
-  });
+async function sendAdaptiveCardMessage(rcWebhook, card) {
   const response = await axios.post(rcWebhook, {
     activity: 'Google Forms Add-in',
     icon: icon.LOGO,

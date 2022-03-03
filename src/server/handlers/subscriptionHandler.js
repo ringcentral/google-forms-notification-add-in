@@ -10,28 +10,30 @@ async function onSubscribe(user, rcWebhookId, rcWebhookUri, formIds) {
     }
   });
   const googleClient = new GoogleClient({ token: user.accessToken });
-  const updateSubscriptionMap = {};
   await Promise.all(formIds.map(async (formId) => {
     const existedSubscription = existedSubscriptions.find((subscription) => subscription.formId === formId);
     if (existedSubscription) {
-      updateSubscriptionMap[existedSubscription.id] = 1;
-      const { expireTime } = await googleClient.renewWatch(formId, existedSubscription.id);
-      existedSubscription.watchExpiredAt = new Date(expireTime);
-      existedSubscription.rcWebhookUri = rcWebhookUri;
-      existedSubscription.messageReceivedAt = new Date();
-      await existedSubscription.save();
-    } else {
-      const { id, expireTime, createTime } = await googleClient.createWatch(formId);
-      await Subscription.create({
-        id,
-        userId: user.id,
-        formId: formId,
-        rcWebhookId: rcWebhookId,
-        rcWebhookUri: rcWebhookUri,
-        watchExpiredAt: new Date(expireTime),
-        messageReceivedAt: new Date(createTime),
-      });
+      const watchExpiredAt = new Date(existedSubscription.watchExpiredAt);
+      if (watchExpiredAt.getTime() > Date.now()) {
+        const { expireTime } = await googleClient.renewWatch(formId, existedSubscription.id);
+        existedSubscription.watchExpiredAt = new Date(expireTime);
+        existedSubscription.rcWebhookUri = rcWebhookUri;
+        existedSubscription.messageReceivedAt = new Date();
+        await existedSubscription.save();
+        return;
+      }
+      await existedSubscription.destroy();
     }
+    const { id, expireTime, createTime } = await googleClient.createWatch(formId);
+    await Subscription.create({
+      id,
+      userId: user.id,
+      formId: formId,
+      rcWebhookId: rcWebhookId,
+      rcWebhookUri: rcWebhookUri,
+      watchExpiredAt: new Date(expireTime),
+      messageReceivedAt: new Date(createTime),
+    });
   }));
 } 
 
@@ -45,7 +47,10 @@ async function onDeleteSubscription(user, rcWebhookUri, formId) {
   });
   const googleClient = new GoogleClient({ token: user.accessToken });
   await Promise.all(subscriptions.map(async (subscription) => {
-    await googleClient.deleteWatch(formId, subscription.id)
+    const watchExpiredAt = new Date(subscription.watchExpiredAt);
+    if (watchExpiredAt.getTime() > Date.now()) {
+      await googleClient.deleteWatch(formId, subscription.id)
+    }
     await subscription.destroy();
   }));
 }

@@ -27,6 +27,60 @@
                 }
             ],
             "separator": true
+        },
+        {
+            "type": "Container",
+            "id": "moreAnswers",
+            "items": [
+                {
+                    "type": "Container",
+                    "$data": "${moreAnswers}",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "${question}",
+                            "size": "Small",
+                            "weight": "Bolder"
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": "${answer}",
+                            "weight": "Default"
+                        }
+                    ]
+                }
+            ],
+            "isVisible": false
+        },
+        {
+            "type": "Container",
+            "id": "shoreMoreButtons",
+            "items": [
+                {
+                    "type": "TextBlock",
+                    "text": "Show more",
+                    "wrap": true,
+                    "color": "Accent",
+                    "id": "showMoreText"
+                },
+                {
+                    "type": "TextBlock",
+                    "text": "Show less",
+                    "wrap": true,
+                    "color": "Accent",
+                    "id": "showLessText",
+                    "isVisible": false
+                }
+            ],
+            "selectAction": {
+                "type": "Action.ToggleVisibility",
+                "targetElements": [
+                    "moreAnswers",
+                    "showMoreText",
+                    "showLessText"
+                ]
+            },
+            "isVisible": false
         }
     ],
     "actions": [
