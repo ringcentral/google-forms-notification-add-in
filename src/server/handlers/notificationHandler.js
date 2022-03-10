@@ -23,7 +23,9 @@ async function onReceiveNotification(subscription, messageTime) {
   const googleClient = new GoogleClient({ token: user.accessToken });
   const formId = subscription.formId;
   const form = await googleClient.getForm(formId);
+  // console.log(JSON.stringify(form, null, 2));
   const responses = await googleClient.getFormResponses(formId, subscription.messageReceivedAt);
+  // console.log(JSON.stringify(responses, null, 2));
   const messageCards = responses.map((response) => formatGoogleFormResponseIntoCard(form, response));
   await Promise.all(messageCards.map(async messageCard => {
     await sendAdaptiveCardMessage(

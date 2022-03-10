@@ -7,25 +7,8 @@
         },
         {
             "type": "Container",
-            "items": [
-                {
-                    "type": "Container",
-                    "$data": "${answers}",
-                    "items": [
-                        {
-                            "type": "TextBlock",
-                            "text": "${question}",
-                            "size": "Small",
-                            "weight": "Bolder"
-                        },
-                        {
-                            "type": "TextBlock",
-                            "text": "${answer}",
-                            "weight": "Default"
-                        }
-                    ]
-                }
-            ],
+            "id": "answers",
+            "items": [],
             "separator": true
         },
         {
@@ -34,20 +17,7 @@
             "items": [
                 {
                     "type": "Container",
-                    "$data": "${moreAnswers}",
-                    "items": [
-                        {
-                            "type": "TextBlock",
-                            "text": "${question}",
-                            "size": "Small",
-                            "weight": "Bolder"
-                        },
-                        {
-                            "type": "TextBlock",
-                            "text": "${answer}",
-                            "weight": "Default"
-                        }
-                    ]
+                    "items": []
                 }
             ],
             "isVisible": false

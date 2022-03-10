@@ -13,7 +13,7 @@ async function openAuthPage(req, res) {
         include_granted_scopes: 'true',
       }
     });
-    console.log(`Opening auth page: ${url}`);
+    // console.log(`Opening auth page: ${url}`);
     res.redirect(url);
   } catch (e) {
     console.error(e);
@@ -44,7 +44,7 @@ async function getUserInfo(req, res) {
   try {
     // check token refresh condition
     await checkAndRefreshAccessToken(user);
-    console.log('accessToken: ', user.accessToken);
+    // console.log('accessToken: ', user.accessToken);
   } catch (e) {
     if (e.response && e.response.status === 401) {
       if (user) {
