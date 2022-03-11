@@ -17,6 +17,7 @@
     "client-build": "NODE_ENV=production webpack --config webpack-production.config.js",
     "serverless-build": "node ./scripts/serverless-build",
     "serverless-deploy": "node ./scripts/serverless-deploy",
+    "refresh-subscription": "node ./src/refreshSubscriptionCron",
     "test": "jest"
   },
   "devDependencies": {
@@ -56,8 +57,8 @@
     "adaptive-expressions": "^4.14.1",
     "adaptivecards-templating": "^2.1.0",
     "shortid": "2.2.16",
-    "sequelize": "^5.22.3",
-    "dynamo-sequelize": "^0.8.1",
+    "sequelize": "^6.16.1",
+    "dynamo-sequelize": "^2.1.0",
     "axios": "^0.21.1",
     "dotenv": "6.2.0",
     "glip-integration-js": "^0.2.0",
