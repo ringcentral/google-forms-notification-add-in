@@ -25,10 +25,12 @@ function getAnswers(form, response) {
             {
               type: 'TextBlock',
               text: item.title,
+              wrap: true,
               weight: 'Bolder',
             },
             {
               type: 'TextBlock',
+              wrap: true,
               text: `${answerDescription}${answer}`,
             },
           ]
@@ -51,14 +53,16 @@ function getAnswers(form, response) {
                     text: `${question.rowQuestion.title}:`
                   }
                 ],
-                width: 'auto',
+                width: 'stretch',
               },
               {
                 type: 'Column',
                 items: [
                   {
                     type: 'TextBlock',
-                    text: answer
+                    text: answer,
+                    wrap: true,
+                    weight: 'Bolder'
                   }
                 ],
                 width: 'stretch',
@@ -74,6 +78,7 @@ function getAnswers(form, response) {
             {
               type: 'TextBlock',
               text: item.title,
+              wrap: true,
               weight: 'Bolder',
             },
           ],
@@ -82,6 +87,7 @@ function getAnswers(form, response) {
           container.items.push({
             type: 'TextBlock',
             text: item.description,
+            wrap: true,
             size: 'Small',
             isSubtle: true,
           });
