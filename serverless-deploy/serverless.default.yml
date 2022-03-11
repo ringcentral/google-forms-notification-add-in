@@ -42,6 +42,11 @@ functions:
           method: any
           path: /{proxy+}
           cors: false
+  refresh:
+    handler: refreshSubscriptionCron.refresh
+    events:
+      - schedule: cron(0 4 ? * * *)
+      # run refresh daily at 4 AM
 resources:
   Resources:
     subscriptionTable:

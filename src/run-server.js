@@ -1,5 +1,5 @@
 // main file for local server
-require('dotenv').config()
+require('dotenv').config();
 
 const { server } = require('./server');
 
