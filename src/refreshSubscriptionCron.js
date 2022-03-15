@@ -1,5 +1,4 @@
 require('dotenv').config();
-const { Op } = require("sequelize");
 
 const { GoogleClient } = require('./server/lib/googleClient');
 const { checkAndRefreshAccessToken } = require('./server/lib/oauth');
@@ -11,7 +10,6 @@ async function refreshSubscription() {
   const expiredIn3Day = new Date(currentTime);
   expiredIn3Day.setDate(currentTime.getDate() + 3);
   const subscriptions = await Subscription.findAll();
-  console.log(`refreshSubscription: ${subscriptions.length} subscriptions to refresh`);
   const users = {};
   for (subscription of subscriptions) {
     if (subscription.watchExpiredAt < currentTime) {
@@ -53,6 +51,9 @@ async function refreshSubscription() {
 }
 
 // Commented out for local testing
-// refreshSubscription();
+if (process.env.RUN_CRON_LOCAL) {
+  console.log('Run cron locally');
+  refreshSubscription();
+}
 
 exports.refresh = refreshSubscription;
