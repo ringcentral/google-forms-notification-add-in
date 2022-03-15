@@ -3,6 +3,7 @@ const { Subscription } = require('../models/subscriptionModel');
 const { decodeJwt, generateJwt } = require('../lib/jwt');
 const { onAuthorize, onUnauthorize } = require('../handlers/authorizationHandler');
 const { checkAndRefreshAccessToken, getOAuthApp } = require('../lib/oauth');
+const { getRCWebhookId } = require('../lib/getRCWebhookId');
 
 async function openAuthPage(req, res) {
   try {
@@ -34,6 +35,12 @@ async function getUserInfo(req, res) {
     res.send('Token invalid.');
     return;
   }
+  const rcWebhookId = getRCWebhookId(rcWebhookUri);
+  if (!rcWebhookId) {
+    res.status(400);
+    res.send('Invalid rcWebhookUri');
+    return;
+  }
   const userId = decodedToken.id;
   const user = await User.findByPk(userId);
   if (!user || !user.accessToken) {
@@ -60,17 +67,9 @@ async function getUserInfo(req, res) {
     res.status(500);
     res.send('Internal error');
   }
-  const subscriptions = await Subscription.findAll({
-    where: {
-      userId: user.id,
-      rcWebhookUri: rcWebhookUri,
-    }
-  });
-  // const subscription = await Subscription.findOne({
-  //   where: {
-  //     rcWebhookUri: rcWebhookUri
-  //   }
-  // });
+  const subscriptions = user.subscriptions.filter(
+    sub => sub.rcWebhookId === rcWebhookId
+  );
   res.json({
     user: {
       name: user.name,
@@ -119,7 +118,32 @@ async function revokeToken(req, res) {
   }
   const userId = decodedToken.id;
   try {
-    await onUnauthorize(userId);
+    const user = await User.findByPk(userId);
+    if (!user || !user.accessToken) {
+      res.status(200);
+      res.json({
+        result: 'ok',
+        authorized: false,
+      });
+      return;
+    }
+    try {
+      await checkAndRefreshAccessToken(user);
+    } catch (e) {
+      if (e.response && e.response.status === 401) {
+        user.accessToken = '';
+        user.refreshToken = '';
+        await user.save();
+        res.status(200);
+        res.json({
+          result: 'ok',
+          authorized: false,
+        });
+        return;
+      }
+      throw e;
+    }
+    await onUnauthorize(user);
     res.status(200);
     res.json({
       result: 'ok',

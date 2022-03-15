@@ -3,6 +3,7 @@ const { User } = require('../models/userModel');
 const { onSubscribe, onDeleteSubscription } = require('../handlers/subscriptionHandler');
 const { GoogleClient } = require('../lib/googleClient');
 const { checkAndRefreshAccessToken } = require('../lib/oauth');
+const { getRCWebhookId } = require('../lib/getRCWebhookId');
 
 async function getFormData(req, res) {
   const jwtToken = req.query.token;
@@ -65,21 +66,6 @@ async function getFormData(req, res) {
   }
 }
 
-function getRCWebhookId(rcWebhookUri) {
-  if (
-    !rcWebhookUri ||
-    (
-      rcWebhookUri.indexOf('https://') !== 0 &&
-      rcWebhookUri.indexOf('http://') !== 0
-    )) {
-    return null;
-  }
-  const uriWithoutQuery = rcWebhookUri.split('?')[0];
-  const uriWithoutHash = uriWithoutQuery.split('#')[0];
-  const paths = uriWithoutHash.split('/');
-  return paths[paths.length - 1];
-}
-
 async function subscribe(req, res) {
   // validate jwt
   const jwtToken = req.body.token;
@@ -120,7 +106,7 @@ async function subscribe(req, res) {
     // get existing user
     const userId = decodedToken.id;
     const user = await User.findByPk(userId.toString());
-    if (!user) {
+    if (!user || !user.accessToken) {
       res.status(401);
       res.send('Unknown user');
       return;
@@ -162,7 +148,8 @@ async function deleteSubscription(req, res) {
 
   // check for rcWebhookUri
   const rcWebhookUri = req.body.rcWebhookUri;
-  if (!rcWebhookUri) {
+  const rcWebhookId = getRCWebhookId(rcWebhookUri);
+  if (!rcWebhookId) {
     res.status(400);
     res.send('Invalid rcWebhookUri');
     return;
@@ -178,14 +165,14 @@ async function deleteSubscription(req, res) {
   try {
     const userId = decodedToken.id;
     const user = await User.findByPk(userId.toString());
-    if (!user) {
+    if (!user || !user.accessToken) {
       res.status(401);
-      res.json()
+      res.json();
       return;
     }
     await checkAndRefreshAccessToken(user);
     // remove webhook notification subscription
-    await onDeleteSubscription(user, rcWebhookUri, formId);
+    await onDeleteSubscription(user, rcWebhookId, formId);
     res.status(200);
     res.json({
       result: 'ok'

@@ -8,19 +8,16 @@ const { User } = require('./server/models/userModel');
 
 async function refreshSubscription() {
   const currentTime = new Date();
-  const expiredTime = new Date(currentTime);
-  expiredTime.setDate(currentTime.getDate() + 3);
-  const subscriptions = await Subscription.findAll({
-    where: {
-      watchExpiredAt: {
-        [Op.lte]: expiredTime,
-      },
-    },
-  });
+  const expiredIn3Day = new Date(currentTime);
+  expiredIn3Day.setDate(currentTime.getDate() + 3);
+  const subscriptions = await Subscription.findAll();
   console.log(`refreshSubscription: ${subscriptions.length} subscriptions to refresh`);
   const users = {};
   for (subscription of subscriptions) {
     if (subscription.watchExpiredAt < currentTime) {
+      continue;
+    }
+    if (subscription.watchExpiredAt > expiredIn3Day) {
       continue;
     }
     try {
@@ -38,7 +35,7 @@ async function refreshSubscription() {
         const { expireTime } = await googleClient.renewWatch(subscription.formId, subscription.id);
         subscription.watchExpiredAt = new Date(expireTime);
         await subscription.save();
-        console.log('refreshing subscription successfully');
+        console.log(`refreshing subscription ${subscription.id} successfully`);
       } catch (e) {
         if (e.response && e.response.status === 401) {
           user.accessToken = '';

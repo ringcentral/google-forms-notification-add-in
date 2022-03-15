@@ -15,6 +15,7 @@ async function onAuthorize(accessToken, refreshToken, expires) {
       refreshToken: refreshToken,
       tokenExpiredAt: expires,
       name: userInfoResponse.name,
+      subscriptions: [],
     });
   }
   else {
@@ -29,24 +30,17 @@ async function onAuthorize(accessToken, refreshToken, expires) {
   return userId;
 }
 
-async function onUnauthorize(userId) {
-  const user = await User.findByPk(userId);
-  if (user && user.accessToken) {
-    const googleClient = new GoogleClient({ token: user.accessToken });
-    const subscriptions = await Subscription.findAll({
-      where: {
-        userId: user.id,
-      },
-    });
-    await Promise.all(subscriptions.map(async (subscription) => {
-      await googleClient.deleteWatch(subscription.formId, subscription.id)
-      await subscription.destroy();
-    }));
-    await googleClient.revokeToken(user.refreshToken);
-    user.accessToken = '';
-    user.refreshToken = '';
-    await user.save();
-  }
+async function onUnauthorize(user) {
+  const googleClient = new GoogleClient({ token: user.accessToken });
+  const subscriptions = user.subscriptions;
+  await Promise.all(subscriptions.map(async (subscription) => {
+    await googleClient.deleteWatch(subscription.formId, subscription.id);
+    await Subscription.destroy({ where: { id: subscription.id } });
+  }));
+  await googleClient.revokeToken(user.refreshToken || user.accessToken);
+  user.accessToken = '';
+  user.refreshToken = '';
+  await user.save();
 }
 
 exports.onAuthorize = onAuthorize;

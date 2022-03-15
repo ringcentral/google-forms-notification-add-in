@@ -24,5 +24,9 @@ exports.User = sequelize.define('users', {
   },
   accessToken: {
     type: Sequelize.STRING,
-  }
+  },
+  subscriptions: {
+    // Save subscriptions reference to better performance for dynamodb
+    type: Sequelize.JSON,
+  },
 });
