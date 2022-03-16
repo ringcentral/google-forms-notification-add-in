@@ -22,7 +22,7 @@ class GoogleClient {
   }
 
   async getForm(id) {
-    const response = await this.requestWithToken(`${this._apiServer}/v1beta/forms/${id}`, 'GET');
+    const response = await this.requestWithToken(`${this._apiServer}/v1/forms/${id}`, 'GET');
     return response.data;
   }
 
@@ -33,7 +33,7 @@ class GoogleClient {
   }
 
   async getFormResponses(formId, fromTime = null) {
-    let url = `${this._apiServer}/v1beta/forms/${formId}/responses`;
+    let url = `${this._apiServer}/v1/forms/${formId}/responses`;
     if (fromTime) {
       const time = new Date(fromTime);
       url = `${url}?filter=timestamp > ${time.toISOString()}`;
@@ -43,13 +43,13 @@ class GoogleClient {
   }
 
   async getFormResponse(formId, responseId) {
-    const response = await this.requestWithToken(`${this._apiServer}/v1beta/forms/${formId}/responses/${responseId}`, 'GET');
+    const response = await this.requestWithToken(`${this._apiServer}/v1/forms/${formId}/responses/${responseId}`, 'GET');
     return response.data;
   }
 
   async createWatch(formId) {
     const response = await this.requestWithToken(
-      `${this._apiServer}/v1beta/forms/${formId}/watches`,
+      `${this._apiServer}/v1/forms/${formId}/watches`,
       'POST',
       {
         watch: {
@@ -67,7 +67,7 @@ class GoogleClient {
 
   async renewWatch(formId, watchId) {
     const response = await this.requestWithToken(
-      `${this._apiServer}/v1beta/forms/${formId}/watches/${watchId}:renew`,
+      `${this._apiServer}/v1/forms/${formId}/watches/${watchId}:renew`,
       'POST',
     );
     return response.data;
@@ -75,7 +75,7 @@ class GoogleClient {
 
   async deleteWatch(formId, watchId) {
     const response = await this.requestWithToken(
-      `${this._apiServer}/v1beta/forms/${formId}/watches/${watchId}`,
+      `${this._apiServer}/v1/forms/${formId}/watches/${watchId}`,
       'DELETE',
     );
     return response.data;
