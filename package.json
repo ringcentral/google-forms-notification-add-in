@@ -13,6 +13,7 @@
     "start": "npm run server",
     "initDB": "node ./scripts/init-db",
     "refreshDB": "node ./scripts/refresh-local-db",
+    "dynamo-local": "node ./scripts/dynamo-local.js",
     "client": "webpack-dev-server --config webpack-dev-server.config.js --inline",
     "client-build": "NODE_ENV=production webpack --config webpack-production.config.js",
     "serverless-build": "node ./scripts/serverless-build",
@@ -21,6 +22,7 @@
     "test": "jest"
   },
   "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.26.0",
     "@babel/core": "^7.11.6",
     "@babel/plugin-proposal-class-properties": "^7.3.4",
     "@babel/plugin-proposal-decorators": "^7.3.0",
@@ -34,6 +36,7 @@
     "@material-ui/core": "^4.11.4",
     "@ringcentral/juno": "^1.11.1",
     "babel-loader": "^8.1.0",
+    "dynamodb-local": "0.0.31",
     "jest": "^27.2.0",
     "ngrok": "^3.3.0",
     "nock": "^13.1.3",

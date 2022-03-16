@@ -103,9 +103,12 @@ dist
 # TernJS port file
 .tern-port
 
+.DS_Store
+
 # sqlite
 *.sqlite
 /.vscode/settings.json
 serverless-deploy/env.yml
 serverless-deploy/serverless.yml
+public
 
