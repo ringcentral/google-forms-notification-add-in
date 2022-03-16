@@ -13,6 +13,7 @@ echo('building...');
 cp('-r', `${projectPath}/src/server`, `${deployPath}/server`);
 cp(`${projectPath}/src/server.js`, `${deployPath}/server.js`);
 cp(`${projectPath}/src/lambda.js`, `${deployPath}/lambda.js`);
+cp(`${projectPath}/src/refreshSubscriptionCron.js`, `${deployPath}/refreshSubscriptionCron.js`);
 cp(`${projectPath}/package.json`, `${deployPath}/package.json`);
 cp(`${projectPath}/package-lock.json`, `${deployPath}/package-lock.json`);
 
