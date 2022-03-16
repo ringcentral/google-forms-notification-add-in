@@ -110,5 +110,9 @@ dist
 /.vscode/settings.json
 serverless-deploy/env.yml
 serverless-deploy/serverless.yml
+serverless-deploy/*.json
+serverless-deploy/*.js
+serverless-deploy/server
+serverless-deploy/node_modules
+serverless-deploy/.serverless
 public
-
