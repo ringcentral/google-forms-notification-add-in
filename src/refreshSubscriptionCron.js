@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-const { GoogleClient } = require('./server/lib/googleClient');
+const { GoogleClient } = require('./server/lib/GoogleClient');
 const { checkAndRefreshAccessToken } = require('./server/lib/oauth');
 const { Subscription } = require('./server/models/subscriptionModel');
 const { User } = require('./server/models/userModel');

@@ -1,7 +1,7 @@
 const { decodeJwt } = require('../lib/jwt');
 const { User } = require('../models/userModel');
 const { onSubscribe, onDeleteSubscription } = require('../handlers/subscriptionHandler');
-const { GoogleClient } = require('../lib/googleClient');
+const { GoogleClient } = require('../lib/GoogleClient');
 const { checkAndRefreshAccessToken } = require('../lib/oauth');
 const { getRCWebhookId } = require('../lib/getRCWebhookId');
 
