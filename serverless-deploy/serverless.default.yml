@@ -1,4 +1,4 @@
-service: ringcentral-add-in-framework
+service: ringcentral-google-forms-notification-app
 provider:
   stage: ${opt:stage, 'prod'}
   name: aws
@@ -19,14 +19,14 @@ provider:
       Stage: production
       Environment: your-env-tag
       Team: your-team
-      Name: ringcentral-add-in-framework
+      Name: ringcentral-google-forms-notification-app
   tags:
     Department: dev
     Owner: Your name
     Stage: production
     Environment: your-env-tag
     Team: your-team
-    Name: ringcentral-add-in-framework
+    Name: ringcentral-google-forms-notification-app
 package:
   excludeDevDependencies: true
   patterns:
@@ -49,10 +49,10 @@ functions:
       # run refresh daily at 4 AM
 resources:
   Resources:
-    subscriptionTable:
+    userTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ringcentral-add-in-framework-webhooks
+        TableName: google-form-rc-notification-users
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -62,10 +62,10 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-    userTable:
+    subscriptionTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ringcentral-add-in-framework-users
+        TableName: google-form-rc-notification-subscriptions
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
