@@ -2,7 +2,7 @@ const Sequelize = require('sequelize');
 const { sequelize } = require('./sequelize');
 
 // Model for User data
-exports.User = sequelize.define('users', {
+const User = sequelize.define('users', {
   id: {
     type: Sequelize.STRING,
     primaryKey: true,
@@ -30,3 +30,18 @@ exports.User = sequelize.define('users', {
     type: Sequelize.JSON,
   },
 });
+
+if (process.env.DIALECT === 'dynamodb') {
+  User.prototype.__$save = User.prototype.save;
+  User.prototype.save = async function () {
+    if (typeof this.subscriptions === 'object') {
+      this.subscriptions = JSON.stringify(this.subscriptions)
+      await this.__$save();
+      this.subscriptions = JSON.parse(this.subscriptions);
+      return;
+    }
+    return this.__$save();
+  }
+}
+
+exports.User = User;

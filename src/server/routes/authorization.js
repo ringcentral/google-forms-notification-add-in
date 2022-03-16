@@ -1,5 +1,4 @@
 const { User } = require('../models/userModel');
-const { Subscription } = require('../models/subscriptionModel');
 const { decodeJwt, generateJwt } = require('../lib/jwt');
 const { onAuthorize, onUnauthorize } = require('../handlers/authorizationHandler');
 const { checkAndRefreshAccessToken, getOAuthApp } = require('../lib/oauth');
@@ -66,6 +65,7 @@ async function getUserInfo(req, res) {
     console.error(e);
     res.status(500);
     res.send('Internal error');
+    return;
   }
   const subscriptions = user.subscriptions.filter(
     sub => sub.rcWebhookId === rcWebhookId
