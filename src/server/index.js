@@ -26,5 +26,6 @@ exports.appExtend = (app) => {
   // notification
   app.post(constants.route.forThirdParty.NOTIFICATION, notificationRoute.notification);
   // Home page
+  app.get('/home', viewRoute.home);
   app.get('/', viewRoute.home);
 }
