@@ -25,4 +25,6 @@ exports.appExtend = (app) => {
   app.get(constants.route.forClient.GET_FORM_DATA, subscriptionRoute.getFormData);
   // notification
   app.post(constants.route.forThirdParty.NOTIFICATION, notificationRoute.notification);
+  // Home page
+  app.get('/', viewRoute.home);
 }
