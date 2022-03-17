@@ -268,8 +268,21 @@ export function App({ integrationHelper, client }) {
               try {
                 setLoading(true);
                 const newForms = await client.getForms(formInputs.map((formInput) => getFormIdFromLink(formInput.value)));
-                setForms(mergeForms(forms, newForms));
-                setFormInputs([]);
+                const noErrorForms = newForms.filter(form => !form.error);
+                const hasErrorForms = newForms.filter(form => !!form.error);
+                setForms(mergeForms(forms, noErrorForms));
+                if (hasErrorForms.length > 0) {
+                  setError('The add-in only support to connect a Google form for a team. Please remove the form at your previous connections.');
+                }
+                setFormInputs(formInputs.filter((formInput) => {
+                  let error = false;
+                  hasErrorForms.forEach((errorForm) => {
+                    if (formInput.value.indexOf(errorForm.formId) > -1) {
+                      error = true;
+                    }
+                  });
+                  return !!error;
+                }));
                 setLoading(false);
               } catch (e) {
                 console.error(e);

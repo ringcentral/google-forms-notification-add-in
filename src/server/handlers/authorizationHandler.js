@@ -34,12 +34,18 @@ async function onUnauthorize(user) {
   const googleClient = new GoogleClient({ token: user.accessToken });
   const subscriptions = user.subscriptions;
   await Promise.all(subscriptions.map(async (subscription) => {
-    await googleClient.deleteWatch(subscription.formId, subscription.id);
-    await Subscription.destroy({ where: { id: subscription.id } });
+    try {
+      await googleClient.deleteWatch(subscription.formId, subscription.id);
+      await Subscription.destroy({ where: { id: subscription.id } });
+    } catch (e) {
+      console.error('Failed to delete watch: ', subscription.id);
+      console.error(e);
+    }
   }));
   await googleClient.revokeToken(user.refreshToken || user.accessToken);
   user.accessToken = '';
   user.refreshToken = '';
+  user.subscriptions = [];
   await user.save();
 }
 

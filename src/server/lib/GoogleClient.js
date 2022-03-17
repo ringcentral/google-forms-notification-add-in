@@ -81,6 +81,14 @@ class GoogleClient {
     return response.data;
   }
 
+  async getWatches(formId) {
+    const response = await this.requestWithToken(
+      `${this._apiServer}/v1/forms/${formId}/watches`,
+      'GET',
+    );
+    return response.data;
+  }
+
   requestWithToken(url, method, data) {
     return axios({
       url,

@@ -43,6 +43,10 @@ async function getFormData(req, res) {
     const googleClient = new GoogleClient({ token: user.accessToken });
     const forms = await Promise.all(formIds.map(async (formId) => {
       const form = await googleClient.getForm(formId);
+      const watchResponse = await googleClient.getWatches(formId)
+      if (watchResponse.watches && watchResponse.watches.length > 0) {
+        form.error = 'DuplicateError';
+      }
       return form;
     }));
     res.json({
