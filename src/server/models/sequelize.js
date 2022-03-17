@@ -2,8 +2,9 @@
 const Sequelize = require('dynamo-sequelize');
 const config = {
   define: {
-    saveUnknown: false,
-    timestamps: true
+    saveUnknown: true,
+    timestamps: true,
+    jsonAsObject: true,
   },
   logging: false,
   throughput: {

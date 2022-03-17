@@ -31,17 +31,4 @@ const User = sequelize.define('users', {
   },
 });
 
-if (process.env.DIALECT === 'dynamodb') {
-  User.prototype.__$save = User.prototype.save;
-  User.prototype.save = async function () {
-    if (typeof this.subscriptions === 'object') {
-      this.subscriptions = JSON.stringify(this.subscriptions)
-      await this.__$save();
-      this.subscriptions = JSON.parse(this.subscriptions);
-      return;
-    }
-    return this.__$save();
-  }
-}
-
 exports.User = User;
