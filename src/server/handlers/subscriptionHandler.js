@@ -57,7 +57,7 @@ async function onSubscribe(user, rcWebhookId, rcWebhookUri, formIds) {
 }
 
 async function onDeleteSubscription(user, rcWebhookId, formId) {
-  let userSubscriptions = user.subscriptions || [];
+  let userSubscriptions = [...user.subscriptions];
   const existedSubscriptions = userSubscriptions.filter(sub => (
     sub.rcWebhookId === rcWebhookId &&
     sub.formId === formId
