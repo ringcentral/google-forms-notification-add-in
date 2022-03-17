@@ -15,6 +15,14 @@ const dynamoDB = new DynamoDB({
 async function listTables() {
   const result = await dynamoDB.listTables({});
   console.log(result);
+  const table1 = await dynamoDB.scan({
+    TableName: result.TableNames[0],
+  });
+  console.log(table1.Items);
+  const table2 = await dynamoDB.scan({
+    TableName: result.TableNames[1],
+  });
+  console.log(table2.Items);
 }
 
 listTables();
