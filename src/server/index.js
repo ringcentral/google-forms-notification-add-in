@@ -27,5 +27,10 @@ exports.appExtend = (app) => {
   app.post(constants.route.forThirdParty.NOTIFICATION, notificationRoute.notification);
   // Home page
   app.get('/home', viewRoute.home);
+  if (process.env.GOOGLE_SITE_VERIFICATION_TOKEN) {
+    app.get(`/${process.env.GOOGLE_SITE_VERIFICATION_TOKEN}.html`, (req, res) => {
+      res.send(`google-site-verification: ${process.env.GOOGLE_SITE_VERIFICATION_TOKEN}.html`);
+    });
+  }
   app.get('/', viewRoute.home);
 }
