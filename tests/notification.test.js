@@ -1,53 +1,37 @@
 const request = require('supertest');
-const nock = require('nock');
 const axios = require('axios');
-const constants = require('../src/server/lib/constants');
 const { server } = require('../src/server');
 const { Subscription } = require('../src/server/models/subscriptionModel');
 
-axios.defaults.adapter = require('axios/lib/adapters/http')
+axios.defaults.adapter = require('axios/lib/adapters/http');
 
 // Example tests
 describe('Notification', () => {
 
-    const mockDomain = 'http://test.com';
-    const mockRcWebhookEndpoint = '/webhook';
-    const mockGoodSubId = 'knownSubId';
-    const mockBadSubId= 'unknownSubId';
+  const mockDomain = 'http://test.com';
+  const mockRCWebhookId = 'knownRcWebhookId';
+  const mockRcWebhookEndpoint = `/webhook/${mockRCWebhookId}`;
+  const mockWatchId = 'knownWatchId';
 
-    beforeAll(async () => {
-        // Mock data on subscriptions table
-        await Subscription.create({
-            id: mockGoodSubId,
-            rcWebhookUri: `${mockDomain}${mockRcWebhookEndpoint}`
-        })
+  beforeAll(async () => {
+    // Mock data on subscriptions table
+    await Subscription.create({
+      id: mockWatchId,
+      userId: 'knownUserId',
+      formId: 'knownFormId',
+      rcWebhookId: mockRCWebhookId,
+      rcWebhookUri: `${mockDomain}${mockRcWebhookEndpoint}`
     });
+  });
 
-    it('notification(): good subscriptionId - send adaptive card', async () => {
-        // Arrange
-        const scope = nock(mockDomain)
-            .post(mockRcWebhookEndpoint)
-            .reply(200, { result: 'OK' });
-        let requestBody = null;
-        scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
-            requestBody = JSON.parse(reqBody);
-        });
-        // Act
-        const res = await request(server)
-            .post(`${constants.route.forThirdParty.NOTIFICATION}?subscriptionId=${mockGoodSubId}`)
-            .send({});
-        // Assert
-        expect(res.status).toEqual(200);
-        expect(requestBody.attachments[0].type).toEqual('AdaptiveCard');
-        scope.done();
+  it('should get 404 with wrong webhook id', async () => {
+    const res = await request(server).post('/notification').send({
+      message: {
+        attributes: {
+          watchId: 'unknownWatchId',
+        },
+      },
     });
-
-    it('notification(): bad subscriptionId - ', async () => {
-        // Act
-        const res = await request(server)
-            .post(`${constants.route.forThirdParty.NOTIFICATION}?subscriptionId=${mockBadSubId}`)
-            .send({});
-        // Assert
-        expect(res.status).toEqual(403);
-    });
+    expect(res.status).toEqual(404);
+  });
 });

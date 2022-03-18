@@ -8,7 +8,7 @@ async function notification(req, res) {
     const watchId = message.attributes.watchId;
     const subscription = await Subscription.findByPk(watchId);
     if (!subscription) {
-      res.status(403);
+      res.status(404);
       res.send('Unknown watch id');
       return;
     }
