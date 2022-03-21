@@ -5,6 +5,11 @@ async function notification(req, res) {
   // console.log(JSON.stringify(req.body, null, 2));
   try {
     const message = req.body.message;
+    if (!message || !message.publishTime || !message.attributes || !message.attributes.watchId) {
+      res.status(400);
+      res.send('Invalid message');
+      return;
+    }
     const watchId = message.attributes.watchId;
     const subscription = await Subscription.findByPk(watchId);
     if (!subscription) {

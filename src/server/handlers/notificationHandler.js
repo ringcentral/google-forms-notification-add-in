@@ -16,9 +16,9 @@ async function onReceiveNotification(subscription, messageTime) {
     if (e.response && e.response.status === 401) {
       user.accessToken = '';
       await user.save();
+      return;
     }
-    console.error(e);
-    return;
+    throw e;
   }
   const googleClient = new GoogleClient({ token: user.accessToken });
   const formId = subscription.formId;
