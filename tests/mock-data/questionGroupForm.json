@@ -1,0 +1,270 @@
+{
+    "formId": "1Lvs9g5yzGKIBQoytlPGTJbTg3x4IYV-xz1JOw00uPw8",
+    "info": {
+        "title": "Event feedback",
+        "description": "Thank you for participating in our event. We hope you had as much fun attending as we did organizing it.\n\nWe want to hear your feedback so we can keep improving our logistics and content. Please fill this quick survey and let us know your thoughts (your answers will be anonymous).",
+        "documentTitle": "Event Feedback"
+    },
+    "revisionId": "00000005",
+    "responderUri": "https://docs.google.com/forms/d/e/1FAIpQLSfx2p56GX3THdef08vuCKRFxk69as-sw0BeTFkiqayYzjHBmQ/viewform",
+    "items": [
+        {
+            "itemId": "7f630802",
+            "title": "How satisfied were you with the event?",
+            "questionItem": {
+                "question": {
+                    "questionId": "68215ab9",
+                    "required": true,
+                    "scaleQuestion": {
+                        "low": 1,
+                        "high": 5,
+                        "lowLabel": "Not very",
+                        "highLabel": "Very much"
+                    }
+                }
+            }
+        },
+        {
+            "itemId": "7b0d9bab",
+            "title": "How relevant and helpful do you think it was for your job?",
+            "questionItem": {
+                "question": {
+                    "questionId": "12366098",
+                    "required": true,
+                    "scaleQuestion": {
+                        "low": 1,
+                        "high": 5,
+                        "lowLabel": "Not very",
+                        "highLabel": "Very much"
+                    }
+                }
+            }
+        },
+        {
+            "itemId": "0499c7be",
+            "title": "What were your key take aways from this event?",
+            "questionItem": {
+                "question": {
+                    "questionId": "14d4f094",
+                    "textQuestion": {}
+                }
+            }
+        },
+        {
+            "itemId": "76d6a4cc",
+            "questionGroupItem": {
+                "questions": [
+                    {
+                        "questionId": "45a96f62",
+                        "required": true,
+                        "rowQuestion": {
+                            "title": "Accommodation"
+                        }
+                    },
+                    {
+                        "questionId": "584de439",
+                        "required": true,
+                        "rowQuestion": {
+                            "title": "Welcome kit"
+                        }
+                    },
+                    {
+                        "questionId": "224d0208",
+                        "required": true,
+                        "rowQuestion": {
+                            "title": "Communication emails"
+                        }
+                    },
+                    {
+                        "questionId": "63615605",
+                        "required": true,
+                        "rowQuestion": {
+                            "title": "Transportation"
+                        }
+                    },
+                    {
+                        "questionId": "431df1cf",
+                        "required": true,
+                        "rowQuestion": {
+                            "title": "Welcome activity"
+                        }
+                    },
+                    {
+                        "questionId": "03045ed6",
+                        "required": true,
+                        "rowQuestion": {
+                            "title": "Venue"
+                        }
+                    },
+                    {
+                        "questionId": "762f4e2d",
+                        "required": true,
+                        "rowQuestion": {
+                            "title": "Activities"
+                        }
+                    },
+                    {
+                        "questionId": "2306265d",
+                        "required": true,
+                        "rowQuestion": {
+                            "title": "Closing ceremony"
+                        }
+                    }
+                ],
+                "grid": {
+                    "columns": {
+                        "type": "RADIO",
+                        "options": [
+                            {
+                                "value": "1"
+                            },
+                            {
+                                "value": "2"
+                            },
+                            {
+                                "value": "3"
+                            },
+                            {
+                                "value": "4"
+                            },
+                            {
+                                "value": "5"
+                            },
+                            {
+                                "value": "N/A"
+                            }
+                        ]
+                    }
+                }
+            },
+            "title": "How satisfied were you with the logistics?",
+            "description": "1 = Very dissatisfied   5 = Very satisfied"
+        },
+        {
+            "itemId": "5323ecd6",
+            "title": "Additional feedback on logistics",
+            "questionItem": {
+                "question": {
+                    "questionId": "7c2eff7f",
+                    "required": true,
+                    "textQuestion": {}
+                }
+            }
+        },
+        {
+            "itemId": "2f084343",
+            "questionGroupItem": {
+                "questions": [
+                    {
+                        "questionId": "7fa0574e",
+                        "required": true,
+                        "rowQuestion": {
+                            "title": "Welcome activity"
+                        }
+                    },
+                    {
+                        "questionId": "23b06558",
+                        "required": true,
+                        "rowQuestion": {
+                            "title": "Speaker #1"
+                        }
+                    },
+                    {
+                        "questionId": "18bc8a8c",
+                        "required": true,
+                        "rowQuestion": {
+                            "title": "Activity #1"
+                        }
+                    },
+                    {
+                        "questionId": "35d094cb",
+                        "required": true,
+                        "rowQuestion": {
+                            "title": "Speaker #2"
+                        }
+                    },
+                    {
+                        "questionId": "29654d9f",
+                        "required": true,
+                        "rowQuestion": {
+                            "title": "Activity #2"
+                        }
+                    },
+                    {
+                        "questionId": "7d1c5320",
+                        "required": true,
+                        "rowQuestion": {
+                            "title": "Closing activity"
+                        }
+                    }
+                ],
+                "grid": {
+                    "columns": {
+                        "type": "RADIO",
+                        "options": [
+                            {
+                                "value": "Not relevant"
+                            },
+                            {
+                                "value": "Relevant"
+                            },
+                            {
+                                "value": "Very relevant"
+                            },
+                            {
+                                "value": "Did not attend"
+                            }
+                        ]
+                    }
+                }
+            },
+            "title": "Which sessions did you find most relevant?"
+        },
+        {
+            "itemId": "1f4fd114",
+            "title": "How satisfied were you with the session content?",
+            "description": "Both presented and pre-read material",
+            "questionItem": {
+                "question": {
+                    "questionId": "49304c11",
+                    "scaleQuestion": {
+                        "low": 1,
+                        "high": 5,
+                        "lowLabel": "Poor",
+                        "highLabel": "Excellent"
+                    }
+                }
+            }
+        },
+        {
+            "itemId": "436b7114",
+            "title": "Any additional comments regarding the sessions or overall agenda?",
+            "questionItem": {
+                "question": {
+                    "questionId": "4fe7b85e",
+                    "textQuestion": {}
+                }
+            }
+        },
+        {
+            "itemId": "0dfb051d",
+            "title": "Any overall feedback for the event?",
+            "questionItem": {
+                "question": {
+                    "questionId": "34653fcb",
+                    "textQuestion": {}
+                }
+            }
+        },
+        {
+            "itemId": "59e55e24",
+            "title": "Name (optional)",
+            "questionItem": {
+                "question": {
+                    "questionId": "48ed2241",
+                    "textQuestion": {}
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,71 @@
+{
+    "responses": [
+        {
+            "responseId": "ACYDBNi6IoiW9-YEmFylYNQJ0faMMvIABYPIPtM-gfjeAnZCFdozGSGw-vbNBle9jPJq2SU",
+            "createTime": "2022-03-15T09:53:07.469Z",
+            "lastSubmittedTime": "2022-03-15T09:53:07.469983Z",
+            "answers": {
+                "000f425b": {
+                    "questionId": "000f425b",
+                    "textAnswers": {
+                        "answers": [
+                            {
+                                "value": "5555"
+                            }
+                        ]
+                    }
+                },
+                "000f425a": {
+                    "questionId": "000f425a",
+                    "textAnswers": {
+                        "answers": [
+                            {
+                                "value": "Phone"
+                            }
+                        ]
+                    }
+                },
+                "000f4254": {
+                    "questionId": "000f4254",
+                    "textAnswers": {
+                        "answers": [
+                            {
+                                "value": "Name"
+                            }
+                        ]
+                    }
+                },
+                "000f4256": {
+                    "questionId": "000f4256",
+                    "textAnswers": {
+                        "answers": [
+                            {
+                                "value": "123456"
+                            }
+                        ]
+                    }
+                },
+                "000f4279": {
+                    "questionId": "000f4279",
+                    "textAnswers": {
+                        "answers": [
+                            {
+                                "value": "I am a new customer"
+                            }
+                        ]
+                    }
+                },
+                "39a4f614": {
+                    "questionId": "39a4f614",
+                    "textAnswers": {
+                        "answers": [
+                            {
+                                "value": "color 4"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}

@@ -19,7 +19,8 @@
     "serverless-build": "node ./scripts/serverless-build",
     "serverless-deploy": "node ./scripts/serverless-deploy",
     "refresh-subscription": "RUN_CRON_LOCAL=1 node ./src/refreshSubscriptionCron",
-    "test": "jest"
+    "test": "jest",
+    "test-coverage": "jest --coverage"
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.26.0",
