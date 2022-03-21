@@ -55,7 +55,6 @@
     "whatwg-fetch": "^2.0.3"
   },
   "dependencies": {
-    "client-oauth2": "^4.3.3",
     "jsonwebtoken": "^8.5.1",
     "adaptive-expressions": "^4.14.1",
     "adaptivecards-templating": "^2.1.0",
