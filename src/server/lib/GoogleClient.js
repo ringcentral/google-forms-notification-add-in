@@ -1,4 +1,6 @@
 const axios = require('axios');
+const querystring = require('querystring');
+const constants = require('./constants');
 
 class GoogleClient {
   constructor({ token }) {
@@ -8,6 +10,64 @@ class GoogleClient {
 
   setToken(token) {
     this._token = token;
+  }
+
+  static authorizationUrl() {
+    const scopes = process.env.GOOGLE_AUTH_SCOPES.split(process.env.GOOGLE_AUTH_SCOPES_SEPARATOR);
+    const query = querystring.stringify({
+      scope: scopes.join(' '),
+      access_type: 'offline',
+      include_granted_scopes: 'true',
+      response_type: 'code',
+      redirect_uri: `${process.env.APP_SERVER}${constants.route.forThirdParty.AUTH_CALLBACK}`,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+    });
+    return `${process.env.GOOGLE_AUTHORIZATION_URI}?${query}`;
+  }
+
+  static async getToken(callbackUri) {
+    const url = new URL(callbackUri);
+    if (url.searchParams.get('error')) {
+      throw new Error(url.searchParams.get('error'));
+    }
+    const code = url.searchParams.get('code');
+    if (!code) {
+      throw new Error('noCode');
+    }
+    const response = await axios.post(
+      process.env.GOOGLE_ACCESS_TOKEN_URI,
+      querystring.stringify({
+        code,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: `${process.env.APP_SERVER}${constants.route.forThirdParty.AUTH_CALLBACK}`,
+        grant_type: 'authorization_code',
+      }),
+      {
+        headers: {
+          'Content-type': 'application/x-www-form-urlencoded'
+        },
+      },
+    );
+    return response.data;
+  }
+
+  static async refreshToken(token) {
+    const response = await axios.post(
+      process.env.GOOGLE_ACCESS_TOKEN_URI,
+      querystring.stringify({
+        refresh_token: token,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        grant_type: 'refresh_token',
+      }),
+      {
+        headers: {
+          'Content-type': 'application/x-www-form-urlencoded'
+        },
+      },
+    );
+    return response.data;
   }
 
   revokeToken(refreshToken) {

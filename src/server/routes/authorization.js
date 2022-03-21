@@ -1,18 +1,13 @@
 const { User } = require('../models/userModel');
 const { decodeJwt, generateJwt } = require('../lib/jwt');
 const { onAuthorize, onUnauthorize } = require('../handlers/authorizationHandler');
-const { checkAndRefreshAccessToken, getOAuthApp } = require('../lib/oauth');
+const { checkAndRefreshAccessToken } = require('../lib/oauth');
 const { getRCWebhookId } = require('../lib/getRCWebhookId');
+const { GoogleClient } = require('../lib/googleClient');
 
 async function openAuthPage(req, res) {
   try {
-    const oauthApp = getOAuthApp();
-    const url = oauthApp.code.getUri({
-      query: {
-        access_type: 'offline',
-        include_granted_scopes: 'true',
-      }
-    });
+    const url = GoogleClient.authorizationUrl();
     // console.log(`Opening auth page: ${url}`);
     res.redirect(url);
   } catch (e) {
@@ -79,15 +74,17 @@ async function getUserInfo(req, res) {
 }
 
 async function generateToken(req, res) {
-  const oauthApp = getOAuthApp();
-  const result = await oauthApp.code.getToken(req.body.callbackUri);
-  const { accessToken, refreshToken, expires } = result;
-  if (!accessToken) {
-    res.status(403);
-    res.send('Params error');
-    return;
-  }
   try {
+    const result = await GoogleClient.getToken(req.body.callbackUri);
+    const accessToken = result.access_token;
+    if (!accessToken) {
+      res.status(403);
+      res.send('Params error');
+      return;
+    }
+    const refreshToken = result.refresh_token;
+    const expires = new Date();
+    expires.setSeconds(expires.getSeconds() + result.expires_in);
     const userId = await onAuthorize(accessToken, refreshToken, expires);
     const jwtToken = generateJwt({ id: userId });
     res.status(200);
