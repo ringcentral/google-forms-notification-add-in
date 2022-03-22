@@ -3,16 +3,12 @@ const { decodeJwt, generateJwt } = require('../lib/jwt');
 const { onAuthorize, onUnauthorize } = require('../handlers/authorizationHandler');
 const { checkAndRefreshAccessToken } = require('../lib/oauth');
 const { getRCWebhookId } = require('../lib/getRCWebhookId');
-const { GoogleClient } = require('../lib/googleClient');
+const { GoogleClient } = require('../lib/GoogleClient');
 
 async function openAuthPage(req, res) {
-  try {
-    const url = GoogleClient.authorizationUrl();
-    // console.log(`Opening auth page: ${url}`);
-    res.redirect(url);
-  } catch (e) {
-    console.error(e);
-  }
+  const url = GoogleClient.authorizationUrl();
+  // console.log(`Opening auth page: ${url}`);
+  res.redirect(url);
 }
 
 async function getUserInfo(req, res) {
