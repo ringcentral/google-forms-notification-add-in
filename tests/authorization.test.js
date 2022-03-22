@@ -462,7 +462,7 @@ describe('Authorization', () => {
       expect(res.text).toContain('Invalid rcWebhookUri.');
     });
 
-    it('should return 401 when rcWebhookUri invalid', async () => {
+    it('should return 401 when user id is unknown', async () => {
       const jwtToken = jwt.generateJwt({
         id: 'unknownUserId',
       });
