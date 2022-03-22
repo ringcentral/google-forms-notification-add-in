@@ -400,4 +400,175 @@ describe('Authorization', () => {
       googleDestroyWatchScope.done();
     });
   });
+
+  describe('get user info', () => {
+    let user;
+    const mockDomain = 'http://test.com';
+    const mockRCWebhookId = 'knownRcWebhookId';
+    const mockRCWebhookEndpoint = `/webhook/${mockRCWebhookId}`;
+    const mockRCWebhookUri = `${mockDomain}${mockRCWebhookEndpoint}`;
+
+    beforeEach(async () => {
+      user = await User.create({
+        id: 'testGoogleUserId',
+        accessToken: 'knownAccessToken',
+        refreshToken: 'knownRefreshToken',
+        tokenExpiredAt: new Date(Date.now() + 3600 * 1000),
+        subscriptions: [],
+        name: 'test user',
+      });
+    });
+
+    afterEach(async () => {
+      await user.destroy();
+    });
+
+    it('should response 403 without jwtToken', async () => {
+      const res = await request(server).get('/get-user-info');
+      expect(res.status).toEqual(403);
+      expect(res.text).toContain('Token required.');
+    });
+
+    it('should return 403 when jwtToken is invalid', async () => {
+      const res = await request(server).get('/get-user-info?token=xxx');
+      expect(res.status).toEqual(401);
+      expect(res.text).toContain('Token invalid.');
+    });
+
+    it('should return 400 when no rcWebhookUri', async () => {
+      const jwtToken = jwt.generateJwt({
+        id: 'unknownUserId',
+      });
+      const res = await request(server).get(`/get-user-info?token=${jwtToken}`);
+      expect(res.status).toEqual(400);
+      expect(res.text).toContain('Invalid rcWebhookUri.');
+    });
+
+    it('should return 400 when no rcWebhookId', async () => {
+      const jwtToken = jwt.generateJwt({
+        id: 'unknownUserId',
+      });
+      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockDomain}/`);
+      expect(res.status).toEqual(400);
+      expect(res.text).toContain('Invalid rcWebhookUri.');
+    });
+
+    it('should return 400 when rcWebhookUri invalid', async () => {
+      const jwtToken = jwt.generateJwt({
+        id: 'unknownUserId',
+      });
+      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=test.com`);
+      expect(res.status).toEqual(400);
+      expect(res.text).toContain('Invalid rcWebhookUri.');
+    });
+
+    it('should return 401 when rcWebhookUri invalid', async () => {
+      const jwtToken = jwt.generateJwt({
+        id: 'unknownUserId',
+      });
+      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockRCWebhookUri}`);
+      expect(res.status).toEqual(401);
+      expect(res.text).toContain('Token invalid.');
+    });
+
+    it('should return 401 when user does not have token', async () => {
+      user.accessToken = '';
+      await user.save();
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockRCWebhookUri}`);
+      expect(res.status).toEqual(401);
+      expect(res.text).toContain('Token invalid.');
+    });
+
+    it('should get user info successfully', async () => {
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockRCWebhookUri}`);
+      expect(res.status).toEqual(200);
+      expect(JSON.parse(res.text).user.name).toEqual('test user');
+      expect(JSON.parse(res.text).formIds.length).toEqual(0);
+    });
+
+    it('should get user info successfully', async () => {
+      user.subscriptions = [
+        {
+          id: 'test_subscriptionId',
+          formId: 'test_formId',
+          rcWebhookId: mockRCWebhookId,
+        },
+        {
+          id: 'test_subscriptionId_1',
+          formId: 'test_formId_1',
+          rcWebhookId: 'otherRcWebhookId',
+        },
+      ];
+      await user.save();
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockRCWebhookUri}`);
+      expect(res.status).toEqual(200);
+      expect(JSON.parse(res.text).user.name).toEqual('test user');
+      expect(JSON.parse(res.text).formIds.length).toEqual(1);
+      expect(JSON.parse(res.text).formIds[0]).toEqual('test_formId');
+    });
+
+    it('should refresh token and get user info successfully', async () => {
+      user.tokenExpiredAt = new Date(Date.now() - 3600 * 1000);
+      await user.save();
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const googleRefreshAuthScope = nock(googleTokenDomain)
+        .post(googleTokenPath)
+        .reply(200, {
+          access_token: 'newAccessToken1',
+          expires_in: 3920,
+          scope: '',
+          token_type: 'Bearer',
+        });
+      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockRCWebhookUri}`);
+      expect(res.status).toEqual(200);
+      expect(JSON.parse(res.text).user.name).toEqual('test user');
+      expect(JSON.parse(res.text).formIds.length).toEqual(0);
+      const newUser = await User.findByPk(user.id);
+      expect(newUser.accessToken).toEqual('newAccessToken1');
+      googleRefreshAuthScope.done();
+    });
+
+    it('should return 401 when refresh token with 401', async () => {
+      user.tokenExpiredAt = new Date(Date.now() - 3600 * 1000);
+      await user.save();
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const googleRefreshAuthScope = nock(googleTokenDomain)
+        .post(googleTokenPath)
+        .reply(401);
+      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockRCWebhookUri}`);
+      expect(res.status).toEqual(401);
+      const newUser = await User.findByPk(user.id);
+      expect(newUser.accessToken).toEqual('');
+      googleRefreshAuthScope.done();
+    });
+
+    it('should return 500 when refresh token with 502', async () => {
+      user.tokenExpiredAt = new Date(Date.now() - 3600 * 1000);
+      await user.save();
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const googleRefreshAuthScope = nock(googleTokenDomain)
+        .post(googleTokenPath)
+        .reply(502);
+      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockRCWebhookUri}`);
+      expect(res.status).toEqual(500);
+      const newUser = await User.findByPk(user.id);
+      expect(!!newUser.accessToken).toEqual(true);
+      googleRefreshAuthScope.done();
+    });
+  });
 });
