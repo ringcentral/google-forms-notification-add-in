@@ -625,4 +625,308 @@ describe('Subscription', () => {
       googleFormWatchesScope.done();
     });
   });
+
+  describe('delete subscription', () => {
+    it('should return 403 without token', async () => {
+      const res = await request(server).delete('/subscribe');
+      expect(res.status).toEqual(403);
+      expect(res.text).toContain('Params invalid');
+    });
+
+    it('should return 401 with invalid token', async () => {
+      const res = await request(server).delete('/subscribe').send({
+        token: 'invalidToken',
+      });
+      expect(res.status).toEqual(401);
+      expect(res.text).toContain('Token invalid');
+    });
+
+    it('should return 400 when no rcWebhookUri', async () => {
+      const jwtToken = jwt.generateJwt({
+        id: 'unknownUserId',
+      });
+      const res = await request(server).delete('/subscribe').send({
+        token: jwtToken,
+      });
+      expect(res.status).toEqual(400);
+      expect(res.text).toContain('Invalid rcWebhookUri');
+    });
+
+    it('should return 400 when no formId', async () => {
+      const jwtToken = jwt.generateJwt({
+        id: 'unknownUserId',
+      });
+      const res = await request(server).delete('/subscribe').send({
+        token: jwtToken,
+        rcWebhookUri: mockRCWebhookUri,
+      });
+      expect(res.status).toEqual(400);
+      expect(res.text).toContain('Invalid formId');
+    });
+
+    it('should return 401 when user id is not found', async () => {
+      const jwtToken = jwt.generateJwt({
+        id: 'unknownUserId',
+      });
+      const res = await request(server).delete('/subscribe').send({
+        token: jwtToken,
+        rcWebhookUri: mockRCWebhookUri,
+        formId: '1234',
+      });
+      expect(res.status).toEqual(401);
+      expect(res.text).toContain('Authorization required');
+    });
+
+    it('should return 401 when user does not have token', async () => {
+      user.accessToken = '';
+      await user.save();
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const res = await request(server).delete('/subscribe').send({
+        token: jwtToken,
+        rcWebhookUri: mockRCWebhookUri,
+        formId: '1234',
+      });
+      expect(res.status).toEqual(401);
+      expect(res.text).toContain('Authorization required');
+    });
+
+    it('should delete subscription successfully', async () => {
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const mockFormId = 'mockFormId';
+      const mockWatchId = 'mockWatchId';
+      await Subscription.create({
+        id: mockWatchId,
+        userId: user.id,
+        formId: mockFormId,
+        rcWebhookId: mockRCWebhookId,
+        watchExpiredAt: new Date(Date.now() + 3600 * 1000),
+        messageReceivedAt: new Date(),
+      });
+      user.subscriptions = [{
+        id: mockWatchId,
+        formId: mockFormId,
+        rcWebhookId: mockRCWebhookId,
+      }];
+      await user.save();
+      const googleFormWatchDeleteScope = nock('https://forms.googleapis.com')
+        .delete(`/v1/forms/${mockFormId}/watches/${mockWatchId}`)
+        .reply(200);
+      const res = await request(server).delete('/subscribe').send({
+        token: jwtToken,
+        rcWebhookUri: mockRCWebhookUri,
+        formId: mockFormId,
+      });
+      expect(res.status).toEqual(200);
+      expect(JSON.parse(res.text).result).toEqual('ok');
+      const newUser = await User.findByPk(user.id);
+      expect(newUser.subscriptions.length).toEqual(0);
+      googleFormWatchDeleteScope.done();
+    });
+
+    it('should delete subscription successfully if subscription is expired', async () => {
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const mockFormId = 'mockFormId';
+      const mockWatchId = 'mockWatchId';
+      await Subscription.create({
+        id: mockWatchId,
+        userId: user.id,
+        formId: mockFormId,
+        rcWebhookId: mockRCWebhookId,
+        watchExpiredAt: new Date(Date.now() - 3600 * 1000),
+        messageReceivedAt: new Date(),
+      });
+      user.subscriptions = [{
+        id: mockWatchId,
+        formId: mockFormId,
+        rcWebhookId: mockRCWebhookId,
+      }];
+      await user.save();
+      const res = await request(server).delete('/subscribe').send({
+        token: jwtToken,
+        rcWebhookUri: mockRCWebhookUri,
+        formId: mockFormId,
+      });
+      expect(res.status).toEqual(200);
+      expect(JSON.parse(res.text).result).toEqual('ok');
+      const newUser = await User.findByPk(user.id);
+      expect(newUser.subscriptions.length).toEqual(0);
+    });
+
+    it('should delete subscription successfully and keep other subscriptions', async () => {
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const mockFormId = 'mockFormId';
+      const mockWatchId = 'mockWatchId';
+      await Subscription.create({
+        id: mockWatchId,
+        userId: user.id,
+        formId: mockFormId,
+        rcWebhookId: mockRCWebhookId,
+        watchExpiredAt: new Date(Date.now() + 3600 * 1000),
+        messageReceivedAt: new Date(),
+      });
+      user.subscriptions = [{
+        id: mockWatchId,
+        formId: mockFormId,
+        rcWebhookId: mockRCWebhookId,
+      }, {
+        id: 'otherWatchId',
+        formId: 'otherFormId',
+        rcWebhookId: 'otherRcWebhookId',
+      }];
+      await user.save();
+      const googleFormWatchDeleteScope = nock('https://forms.googleapis.com')
+        .delete(`/v1/forms/${mockFormId}/watches/${mockWatchId}`)
+        .reply(200);
+      const res = await request(server).delete('/subscribe').send({
+        token: jwtToken,
+        rcWebhookUri: mockRCWebhookUri,
+        formId: mockFormId,
+      });
+      expect(res.status).toEqual(200);
+      expect(JSON.parse(res.text).result).toEqual('ok');
+      const newUser = await User.findByPk(user.id);
+      expect(newUser.subscriptions.length).toEqual(1);
+      expect(newUser.subscriptions[0].id).toEqual('otherWatchId');
+      googleFormWatchDeleteScope.done();
+    });
+
+    it('should refresh token and delete subscription successfully', async () => {
+      user.tokenExpiredAt = new Date(Date.now() - 3600 * 1000);
+      await user.save();
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const mockFormId = 'mockFormId';
+      const mockWatchId = 'mockWatchId';
+      await Subscription.create({
+        id: mockWatchId,
+        userId: user.id,
+        formId: mockFormId,
+        rcWebhookId: mockRCWebhookId,
+        watchExpiredAt: new Date(Date.now() + 3600 * 1000),
+        messageReceivedAt: new Date(),
+      });
+      user.subscriptions = [{
+        id: mockWatchId,
+        formId: mockFormId,
+        rcWebhookId: mockRCWebhookId,
+      }];
+      await user.save();
+      const googleRefreshAuthScope = nock(googleTokenDomain)
+        .post(googleTokenPath)
+        .reply(200, {
+          access_token: 'newAccessToken1',
+          expires_in: 3920,
+          scope: '',
+          token_type: 'Bearer',
+        });
+      const googleFormWatchDeleteScope = nock('https://forms.googleapis.com')
+        .delete(`/v1/forms/${mockFormId}/watches/${mockWatchId}`)
+        .reply(200);
+      const res = await request(server).delete('/subscribe').send({
+        token: jwtToken,
+        rcWebhookUri: mockRCWebhookUri,
+        formId: mockFormId,
+      });
+      expect(res.status).toEqual(200);
+      expect(JSON.parse(res.text).result).toEqual('ok');
+      const newUser = await User.findByPk(user.id);
+      expect(newUser.subscriptions.length).toEqual(0);
+      expect(newUser.accessToken).toEqual('newAccessToken1');
+      googleRefreshAuthScope.done();
+      googleFormWatchDeleteScope.done();
+    });
+
+    it('should return 401 when refresh token 401', async () => {
+      user.tokenExpiredAt = new Date(Date.now() - 3600 * 1000);
+      await user.save();
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const mockFormId = 'mockFormId';
+      const mockWatchId = 'mockWatchId';
+      await Subscription.create({
+        id: mockWatchId,
+        userId: user.id,
+        formId: mockFormId,
+        rcWebhookId: mockRCWebhookId,
+        watchExpiredAt: new Date(Date.now() + 3600 * 1000),
+        messageReceivedAt: new Date(),
+      });
+      user.subscriptions = [{
+        id: mockWatchId,
+        formId: mockFormId,
+        rcWebhookId: mockRCWebhookId,
+      }];
+      await user.save();
+      const googleRefreshAuthScope = nock(googleTokenDomain)
+        .post(googleTokenPath)
+        .reply(401);
+      const res = await request(server).delete('/subscribe').send({
+        token: jwtToken,
+        rcWebhookUri: mockRCWebhookUri,
+        formId: mockFormId,
+      });
+      expect(res.status).toEqual(401);
+      const newUser = await User.findByPk(user.id);
+      expect(newUser.subscriptions.length).toEqual(1);
+      expect(newUser.accessToken).toEqual('');
+      googleRefreshAuthScope.done();
+      await Subscription.destroy({
+        where: {
+          id: mockWatchId,
+        },
+      });
+    });
+
+    it('should return 500 when refresh token 502', async () => {
+      user.tokenExpiredAt = new Date(Date.now() - 3600 * 1000);
+      await user.save();
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const mockFormId = 'mockFormId';
+      const mockWatchId = 'mockWatchId';
+      await Subscription.create({
+        id: mockWatchId,
+        userId: user.id,
+        formId: mockFormId,
+        rcWebhookId: mockRCWebhookId,
+        watchExpiredAt: new Date(Date.now() + 3600 * 1000),
+        messageReceivedAt: new Date(),
+      });
+      user.subscriptions = [{
+        id: mockWatchId,
+        formId: mockFormId,
+        rcWebhookId: mockRCWebhookId,
+      }];
+      await user.save();
+      const googleRefreshAuthScope = nock(googleTokenDomain)
+        .post(googleTokenPath)
+        .reply(502);
+      const res = await request(server).delete('/subscribe').send({
+        token: jwtToken,
+        rcWebhookUri: mockRCWebhookUri,
+        formId: mockFormId,
+      });
+      expect(res.status).toEqual(500);
+      const newUser = await User.findByPk(user.id);
+      expect(newUser.subscriptions.length).toEqual(1);
+      expect(!!newUser.accessToken).toEqual(true);
+      googleRefreshAuthScope.done();
+      await Subscription.destroy({
+        where: {
+          id: mockWatchId,
+        },
+      });
+    });
+  });
 });
