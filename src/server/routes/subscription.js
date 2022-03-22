@@ -147,7 +147,7 @@ async function deleteSubscription(req, res) {
   const jwtToken = req.body.token;
   if (!jwtToken) {
     res.status(403);
-    res.send('Params invalid.');
+    res.send('Params invalid');
     return;
   }
   const decodedToken = decodeJwt(jwtToken);
@@ -172,13 +172,13 @@ async function deleteSubscription(req, res) {
     res.send('Invalid formId');
     return;
   }
-
+  let user;
   try {
     const userId = decodedToken.id;
-    const user = await User.findByPk(userId.toString());
+    user = await User.findByPk(userId.toString());
     if (!user || !user.accessToken) {
       res.status(401);
-      res.json();
+      res.send('Authorization required');
       return;
     }
     await checkAndRefreshAccessToken(user);
@@ -190,6 +190,11 @@ async function deleteSubscription(req, res) {
     });
   } catch (e) {
     if (e.response && e.response.status === 401) {
+      if (user) {
+        user.accessToken = '';
+        user.refreshToken = '';
+        await user.save();
+      }
       res.status(401);
       res.send('Unauthorized');
       return;
