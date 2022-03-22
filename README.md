@@ -1,7 +1,7 @@
-# RingCentral Notification for Google Forms
+# RingCentral Notification Add-in for Google Forms
 
 A RingCentral Add-in to receive Google Forms responses message at RingCentral team messaging.
- 
+
 ## Prerequisites
 
 - Download and install RingCentral App and login: https://www.ringcentral.com/apps/rc-app
@@ -53,8 +53,6 @@ Get Google Client credentials from Google Developer Console. For `GOOGLE_PUBSUB_
 Go to [RingCentral Developer Portal](https://developers.ringcentral.com/) and [create a notification add-in app](https://developers.ringcentral.com/guide/basics/create-app).
 
 On app creation page, please:
-- Tick on Interactive Messages and fill in Outbound Webhook URL with `https://xxxx.ngrok.io/interactive-messages`
-- Copy Shared Secret and fill in for `IM_SHARED_SECRET` in above `.env` file
 - Tick on 'This app can be installed via web' and fill in `https://xxxx.ngrok.io/setup` 
 
 ### Step.6 Start Local Server and Client
@@ -73,16 +71,7 @@ npm run client
 
 ### Step.7 Try at RingCentral Sandbox
 
-In RingCentral developer portal your app's Credentials page, install app into RingCentral Sandbox to test.
-
-### Additional Note
-
-There are several npm packages to be highlighted here:
-- [adaptivecards-templating](https://www.npmjs.com/package/adaptivecards-templating): Tool to inject data into Adaptive Cards json files.
-- [sequelize](https://www.npmjs.com/package//sequelize): Node.js database ORM tool
-- [axios](https://www.npmjs.com/package/axios): Promise based HTTP client for the browser and node.js
-- [client-oauth2](https://www.npmjs.com/package/client-oauth2): OAuth2 wrapper
-- [serverless](https://www.npmjs.com/package/serverless): serverless framework
+Go to `https://app.devtest.ringcentral.com/apps/sandbox` with your sandbox account, you can get your apps in development here. Click Plus icon to add the notification app to test.
 
 # Deployment
 
@@ -112,7 +101,7 @@ $ cp serverless-deploy/serverless.default.yml serverless-deploy/serverless.yml
 ```
 
 Edit `serverless-deploy/env.yml` to update serverless settings.
-The Dynamo `TableName` should be `${DYNAMODB_TABLE_PREFIX}webhooks`. `DYNAMODB_TABLE_PREFIX` is environment variable that we set upper. `ASSETS_PATH` is uri where you host JS files in `Step 1`.
+The Dynamo `TableName` should be `${DYNAMODB_TABLE_PREFIX}users`. `DYNAMODB_TABLE_PREFIX` is environment variable that we set upper. `ASSETS_PATH` is uri where you host JS files in `Step 1`.
 
 ### 4. Deploy
 
