@@ -75,7 +75,7 @@ async function subscribe(req, res) {
   const jwtToken = req.body.token;
   if (!jwtToken) {
     res.status(403);
-    res.send('Params invalid.');
+    res.send('Params invalid');
     return;
   }
   const decodedToken = decodeJwt(jwtToken);
@@ -104,15 +104,17 @@ async function subscribe(req, res) {
   if (formIds.length > 10) {
     res.status(400);
     res.send('Max 10 forms');
+    return;
   }
+  let user;
   // create webhook notification subscription
   try {
     // get existing user
     const userId = decodedToken.id;
-    const user = await User.findByPk(userId.toString());
+    user = await User.findByPk(userId.toString());
     if (!user || !user.accessToken) {
       res.status(401);
-      res.send('Unknown user');
+      res.send('Authorization required');
       return;
     }
     await checkAndRefreshAccessToken(user);
@@ -124,6 +126,11 @@ async function subscribe(req, res) {
   }
   catch (e) {
     if (e.response && e.response.status === 401) {
+      if (user) {
+        user.accessToken = '';
+        user.refreshToken = '';
+        await user.save();
+      }
       res.status(401);
       res.send('Unauthorized');
       return;
