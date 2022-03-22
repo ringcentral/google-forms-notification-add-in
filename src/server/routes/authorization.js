@@ -16,7 +16,7 @@ async function getUserInfo(req, res) {
   const rcWebhookUri = req.query.rcWebhookUri;
   if (!jwtToken) {
     res.status(403);
-    res.send('Error params');
+    res.send('Token required.');
     return;
   }
   const decodedToken = decodeJwt(jwtToken);
@@ -28,7 +28,7 @@ async function getUserInfo(req, res) {
   const rcWebhookId = getRCWebhookId(rcWebhookUri);
   if (!rcWebhookId) {
     res.status(400);
-    res.send('Invalid rcWebhookUri');
+    res.send('Invalid rcWebhookUri.');
     return;
   }
   const userId = decodedToken.id;
@@ -44,11 +44,9 @@ async function getUserInfo(req, res) {
     // console.log('accessToken: ', user.accessToken);
   } catch (e) {
     if (e.response && e.response.status === 401) {
-      if (user) {
-        user.accessToken = '';
-        user.refreshToken = '';
-        await user.save();
-      }
+      user.accessToken = '';
+      user.refreshToken = '';
+      await user.save();
       res.status(401);
       res.send('Unauthorized.');
       return;
