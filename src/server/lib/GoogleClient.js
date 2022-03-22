@@ -28,7 +28,9 @@ class GoogleClient {
   static async getToken(callbackUri) {
     const url = new URL(callbackUri);
     if (url.searchParams.get('error')) {
-      throw new Error(url.searchParams.get('error'));
+      const error = new Error('authError');
+      error.details = url.searchParams.get('error');
+      throw error;
     }
     const code = url.searchParams.get('code');
     if (!code) {

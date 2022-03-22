@@ -70,12 +70,17 @@ async function getUserInfo(req, res) {
 }
 
 async function generateToken(req, res) {
+  if (!req.body.callbackUri) {
+    res.status(403);
+    res.send('params error');
+    return;
+  }
   try {
     const result = await GoogleClient.getToken(req.body.callbackUri);
     const accessToken = result.access_token;
     if (!accessToken) {
       res.status(403);
-      res.send('Params error');
+      res.send('auth error');
       return;
     }
     const refreshToken = result.refresh_token;
@@ -89,9 +94,19 @@ async function generateToken(req, res) {
       token: jwtToken,
     });
   } catch (e) {
+    if (e.message === 'noCode') {
+      res.status(403);
+      res.send('code is required');
+      return;
+    }
+    if (e.message === 'authError') {
+      res.status(403);
+      res.send(e.details);
+      return;
+    }
     console.error(e);
     res.status(500);
-    res.send('Internal error.');
+    res.send('internal error');
   }
 }
 

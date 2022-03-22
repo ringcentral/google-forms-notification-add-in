@@ -5,7 +5,7 @@ const { GoogleClient } = require('../lib/GoogleClient');
 async function onAuthorize(accessToken, refreshToken, expires) {
   const googleClient = new GoogleClient({ token: accessToken });
   const userInfoResponse = await googleClient.getUserInfo();
-  const userId = userInfoResponse.sub; // [REPLACE] this line with user id from actual response
+  const userId = userInfoResponse.sub;
 
   let user = await User.findByPk(userId);
   if (!user) {
