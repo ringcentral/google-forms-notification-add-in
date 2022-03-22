@@ -282,13 +282,13 @@ describe('Notification', () => {
       user.tokenExpiredAt = new Date(Date.now() - 3600 * 1000);
       await user.save();
       const googleRefreshAuthScope = nock(googleTokenDomain)
-          .post(googleTokenPath)
-          .reply(200, {
-            access_token: 'newAccessToken',
-            expires_in: 3920,
-            scope: '',
-            token_type: 'Bearer',
-          });
+        .post(googleTokenPath)
+        .reply(200, {
+          access_token: 'newAccessToken',
+          expires_in: 3920,
+          scope: '',
+          token_type: 'Bearer',
+        });
       const googleFormScope = nock('https://forms.googleapis.com')
         .get(`/v1/forms/${mockFormId}`)
         .reply(200, formData);
