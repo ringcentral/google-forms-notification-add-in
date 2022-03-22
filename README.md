@@ -16,7 +16,7 @@ A RingCentral Add-in to receive Google Forms responses message at [RingCentral t
 ### Step.1 Clone this project
 
 ```
-$ git clone this_project_uri
+$ git clone https://github.com/ringcentral/google-forms-notification-add-in.git
 ```
 
 ### Step.2 Install dependencies
