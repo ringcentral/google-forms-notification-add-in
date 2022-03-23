@@ -16,7 +16,7 @@ const route = {
 }
 
 const icon = {
-  LOGO: 'https://user-images.githubusercontent.com/7036536/151290687-259f4a4a-4185-4013-8475-668061a20a1f.png',
+  LOGO: 'https://raw.githubusercontent.com/ringcentral/google-forms-notification-add-in/main/icons/logo.png',
 };
 
 exports.route = route;
