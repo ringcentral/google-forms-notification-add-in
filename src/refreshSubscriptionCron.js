@@ -11,7 +11,7 @@ async function refreshSubscription() {
   expiredIn3Day.setDate(currentTime.getDate() + 3);
   const subscriptions = await Subscription.findAll();
   const users = {};
-  for (subscription of subscriptions) {
+  for (const subscription of subscriptions) {
     if (subscription.watchExpiredAt < currentTime) {
       continue;
     }
@@ -48,12 +48,6 @@ async function refreshSubscription() {
       console.error(e);
     }
   }
-}
-
-// Commented out for local testing
-if (process.env.RUN_CRON_LOCAL) {
-  console.log('Run cron locally');
-  refreshSubscription();
 }
 
 exports.refresh = refreshSubscription;
