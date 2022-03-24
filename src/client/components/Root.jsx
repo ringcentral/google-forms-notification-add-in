@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   RcThemeProvider,
   RcIconButton,
@@ -191,6 +191,29 @@ export function App({ integrationHelper, client, analytics }) {
     }
   }, [forms, formInputs]);
 
+  const onAuthCallback = useCallback(async (e) => {
+    if (e.data && e.data.authCallback) {
+      window.removeEventListener('message', onAuthCallback);
+      if (e.data.authCallback.indexOf('error') > -1) {
+        setError('Authorization error')
+        setLoading(false);
+        analytics.track('Authorize Google error');
+        return;
+      }
+      setLoading(true);
+      try {
+        // Authorize
+        await client.authorize(e.data.authCallback);
+        setAuthorized(true);
+        analytics.track('Authorize Google success');
+      } catch (e) {
+        console.error(e);
+        setError('Authorization error please retry later.')
+      }
+      setLoading(false);
+    }
+  }, []);
+
   return (
     <RcThemeProvider>
       <RcLoading loading={loading}>
@@ -309,28 +332,7 @@ export function App({ integrationHelper, client, analytics }) {
             onLogin={() => {
               setLoading(true);
               integrationHelper.openWindow(client.authPageUri);
-              async function onAuthCallback(e) {
-                if (e.data && e.data.authCallback) {
-                  window.removeEventListener('message', onAuthCallback);
-                  if (e.data.authCallback.indexOf('error') > -1) {
-                    setError('Authorization error')
-                    setLoading(false);
-                    analytics.track('Authorize Google error');
-                    return;
-                  }
-                  setLoading(true);
-                  try {
-                    // Authorize
-                    await client.authorize(e.data.authCallback);
-                    setAuthorized(true);
-                    analytics.track('Authorize Google success');
-                  } catch (e) {
-                    console.error(e);
-                    setError('Authorization error please retry later.')
-                  }
-                  setLoading(false);
-                }
-              }
+              window.removeEventListener('message', onAuthCallback);
               window.addEventListener('message', onAuthCallback);
               setTimeout(() => {
                 setLoading(false);
