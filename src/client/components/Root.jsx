@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   RcThemeProvider,
+  RcIconButton,
   RcLoading,
   RcAlert,
   RcStep,
@@ -9,6 +10,7 @@ import {
   RcStepper,
 } from '@ringcentral/juno';
 import { styled } from '@ringcentral/juno/foundation';
+import { Feedback } from '@ringcentral/juno/icon';
 
 import { AuthorizationPanel } from './AuthorizationPanel';
 import { FormSelectionPanel } from './FormSelectionPanel';
@@ -39,13 +41,19 @@ function getFormIdFromLink(formLink) {
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 0 20px;
+  padding: 0 35px;
   justify-content: center;
   align-items: center;
 `;
 
 const StyledStepper = styled(RcStepper)`
   padding-bottom: 15px;
+`;
+
+const FloatingLink = styled.a`
+  position: fixed;
+  left: 5px;
+  bottom: 10px;
 `;
 
 function StepContent({
@@ -84,7 +92,7 @@ function StepContent({
   );
 }
 
-export function App({ integrationHelper, client }) {
+export function App({ integrationHelper, client, analytics }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeStep, setActiveStep] = useState(0);
@@ -145,6 +153,7 @@ export function App({ integrationHelper, client }) {
     // Listen RingCentral app submit event to submit data to server
     integrationHelper.on('submit', async () => {
       setLoading(true);
+      analytics.track('Subscribe Google form');
       const formIds = forms.map(form => form.formId);
       try {
         await client.subscribe(formIds);
@@ -244,7 +253,8 @@ export function App({ integrationHelper, client }) {
                 setLoading(false);
                 return;
               }
-              setForms(forms.filter(form => form.formId !== formId))
+              setForms(forms.filter(form => form.formId !== formId));
+              analytics.track('Delete Google form');
             }}
             formInputs={formInputs}
             setFormInputs={setFormInputs}
@@ -294,6 +304,7 @@ export function App({ integrationHelper, client }) {
                   setError('Fetch data error please retry later');
                 }
               }
+              analytics.track('Save Google form');
             }}
             onLogin={() => {
               setLoading(true);
@@ -304,6 +315,7 @@ export function App({ integrationHelper, client }) {
                   if (e.data.authCallback.indexOf('error') > -1) {
                     setError('Authorization error')
                     setLoading(false);
+                    analytics.track('Authorize Google error');
                     return;
                   }
                   setLoading(true);
@@ -311,6 +323,7 @@ export function App({ integrationHelper, client }) {
                     // Authorize
                     await client.authorize(e.data.authCallback);
                     setAuthorized(true);
+                    analytics.track('Authorize Google success');
                   } catch (e) {
                     console.error(e);
                     setError('Authorization error please retry later.')
@@ -322,6 +335,7 @@ export function App({ integrationHelper, client }) {
               setTimeout(() => {
                 setLoading(false);
               }, 2000);
+              analytics.track('Authorize Google');
             }}
             onLogout={async () => {
               setLoading(true);
@@ -335,9 +349,25 @@ export function App({ integrationHelper, client }) {
                 setLoading(false);
                 setError('Logout error please retry later.');
               }
+              analytics.track('Unauthorize Google');
             }}
           />
         </Container>
+        <FloatingLink
+          href="https://github.com/ringcentral/google-forms-notification-add-in/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => {
+            analytics.track('Click feedback button');
+          }}
+        >
+          <RcIconButton
+            symbol={Feedback}
+            variant="contained"
+            color="action.primary"
+            title="Feedback (Any suggestions, or issues about this add-in?)"
+          />
+        </FloatingLink>
       </RcLoading>
     </RcThemeProvider>
   );
