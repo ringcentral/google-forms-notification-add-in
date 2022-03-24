@@ -7,10 +7,9 @@ const outputPath = path.resolve(__dirname, 'public');
 
 const config = getBaseConfig();
 config.devServer = {
-  contentBase: buildPath,
   hot: true,
-  inline: true,
   port: 8081,
+  static: buildPath,
 };
 config.output = {
   path: outputPath,
