@@ -14,7 +14,8 @@ async function setup(req, res) {
       getFormDataUri: `${process.env.APP_SERVER}${constants.route.forClient.GET_FORM_DATA}`,
       generateTokenUri: `${process.env.APP_SERVER}${constants.route.forClient.GENERATE_TOKEN}`,
       authRevokeUri: `${process.env.APP_SERVER}${constants.route.forClient.REVOKE_TOKEN}`,
-      subscribeUri : `${process.env.APP_SERVER}${constants.route.forClient.SUBSCRIBE}`
+      subscribeUri : `${process.env.APP_SERVER}${constants.route.forClient.SUBSCRIBE}`,
+      segmentKey: process.env.SEGMENT_KEY,
     },
   });
 }
