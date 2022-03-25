@@ -16,6 +16,7 @@ async function setup(req, res) {
       authRevokeUri: `${process.env.APP_SERVER}${constants.route.forClient.REVOKE_TOKEN}`,
       subscribeUri : `${process.env.APP_SERVER}${constants.route.forClient.SUBSCRIBE}`,
       segmentKey: process.env.SEGMENT_KEY,
+      isBeta: process.env.BETA,
     },
   });
 }
