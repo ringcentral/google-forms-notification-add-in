@@ -24,16 +24,23 @@ const LoginTitle = styled(RcTypography)`
 function LoginPanel({
   onLogin,
 }) {
+  const content = window.clientConfig.isBeta ? (
+    <RcTypography color="secondary" display="block">
+      Warning: This service is at beta stage. Please click "Advanced" when seeing a "Google hasn't verified this app" page at Google Authorization. Then select "See all responses" and "See all Forms" for access.
+    </RcTypography>
+  ) : (
+    <LoginTitle
+      color="textPrimary"
+      variant="subheading1"
+      paragraph
+      display="block"
+    >
+      To begin, please connect your Google account.
+    </LoginTitle>
+  );
   return (
     <Fragment>
-      <LoginTitle
-        color="textPrimary"
-        variant="subheading1"
-        paragraph
-        display="block"
-      >
-        To begin, please connect your Google account.
-      </LoginTitle>
+      {content}
       <br />
       <RcButton onClick={onLogin}>
         Connect to Google Forms
