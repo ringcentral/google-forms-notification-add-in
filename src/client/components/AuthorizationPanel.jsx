@@ -1,6 +1,7 @@
 import React, { Fragment, useState } from 'react';
-import { RcButton, RcText, RcTypography, RcDialog, RcDialogContent, RcDialogActions } from '@ringcentral/juno';
+import { RcButton, RcText, RcTypography, RcDialog, RcDialogContent, RcDialogActions, RcIcon } from '@ringcentral/juno';
 import { styled } from '@ringcentral/juno/foundation';
+import GoogleLogo from '@ringcentral/juno/icon/GoogleLogo';
 
 const ButtonGroup = styled.div`
   display: flex;
@@ -19,6 +20,25 @@ const LoginInfo = styled.div`
 
 const LoginTitle = styled(RcTypography)`
   margin-top: 10px;
+`;
+
+const GoogleSignButton = styled(RcButton)`
+  height: 40px;
+  box-shadow: rgb(0 0 0 / 20%) 0px 1px 8px 0px, rgb(0 0 0 / 14%) 0px 3px 4px 0px, rgb(0 0 0 / 12%) 0px 3px 3px -2px;
+  font-weight: 500;
+  font-size: 14px;
+  font-family: Roboto,Lato,Helvetica,Arial,sans-serif;
+  padding: 0 12px;
+
+  svg {
+    margin-right: 9px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .MuiButton-label {
+    color: rgba(0, 0, 0, 0.54);
+  }
 `;
 
 function LoginPanel({
@@ -42,9 +62,14 @@ function LoginPanel({
     <Fragment>
       {content}
       <br />
-      <RcButton onClick={onLogin}>
-        Connect to Google Forms
-      </RcButton>
+      <GoogleSignButton
+        onClick={onLogin}
+        startIcon={<RcIcon symbol={GoogleLogo} />}
+        variant="text"
+        color="action.grayDark"
+      >
+        Sign in with Google
+      </GoogleSignButton>
     </Fragment>
   )
 }

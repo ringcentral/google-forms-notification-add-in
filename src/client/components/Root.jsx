@@ -10,7 +10,7 @@ import {
   RcStepper,
 } from '@ringcentral/juno';
 import { styled } from '@ringcentral/juno/foundation';
-import { Feedback } from '@ringcentral/juno/icon';
+import Feedback from '@ringcentral/juno/icon/Feedback';
 
 import { AuthorizationPanel } from './AuthorizationPanel';
 import { FormSelectionPanel } from './FormSelectionPanel';
