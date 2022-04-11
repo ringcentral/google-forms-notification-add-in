@@ -22,7 +22,9 @@ async function setup(req, res) {
 }
 
 function home(req, res) {
-  res.render('home');
+  res.render('home', {
+    videoUri: process.env.HOME_VIDEO_URI,
+  });
 }
 
 exports.setup = setup;
