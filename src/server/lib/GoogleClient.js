@@ -37,6 +37,7 @@ class GoogleClient {
     }
     const scope = url.searchParams.get('scope');
     if (
+      !scope ||
       scope.indexOf('forms.responses.readonly') === -1 ||
       scope.indexOf('forms.body.readonly') === -1
     ) {
