@@ -200,6 +200,15 @@ export function App({ integrationHelper, client, analytics }) {
         analytics.track('Authorize Google error');
         return;
       }
+      if (
+        e.data.authCallback.indexOf('forms.responses.readonly') === -1 ||
+        e.data.authCallback.indexOf('forms.body.readonly') === -1
+      ) {
+        setError('Please allow read-only access to forms and responses');
+        setLoading(false);
+        analytics.track('Authorize Google scope error');
+        return;
+      }
       setLoading(true);
       try {
         // Authorize

@@ -36,6 +36,13 @@ class GoogleClient {
     if (!code) {
       throw new Error('noCode');
     }
+    const scope = url.searchParams.get('scope');
+    if (
+      scope.indexOf('forms.responses.readonly') === -1 ||
+      scope.indexOf('forms.body.readonly') === -1
+    ) {
+      throw new Error('invalidScope');
+    }
     const response = await axios.post(
       process.env.GOOGLE_ACCESS_TOKEN_URI,
       querystring.stringify({
