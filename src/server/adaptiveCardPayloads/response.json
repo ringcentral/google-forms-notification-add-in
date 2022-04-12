@@ -1,5 +1,6 @@
 {
     "type": "AdaptiveCard",
+    "fallbackText": "New response at ${formTitle}",
     "body": [
         {
             "type": "TextBlock",
