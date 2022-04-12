@@ -245,6 +245,41 @@ describe('Notification', () => {
       webhookScope.done();
     });
 
+    it('should send card to webhook uri successfully with form documentTitle', async () => {
+      const newFormData = JSON.parse(JSON.stringify(formData));
+      delete newFormData.info.description;
+      delete newFormData.info.title;
+      const googleFormScope = nock('https://forms.googleapis.com')
+        .get(`/v1/forms/${mockFormId}`)
+        .reply(200, newFormData);
+      const googleFormResponseScope = nock('https://forms.googleapis.com')
+        .get(uri => uri.includes(`/v1/forms/${mockFormId}/responses`))
+        .reply(200, formResponsesData);
+      const webhookScope = nock(mockDomain)
+        .post(mockRcWebhookEndpoint)
+        .reply(200, { result: 'OK' });
+      let requestBody = null;
+      webhookScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+        requestBody = JSON.parse(reqBody);
+      });
+      const res = await request(server).post('/notification').send({
+        message: {
+          attributes: {
+            watchId: mockWatchId,
+          },
+          publishTime: mockMessagePublishTime,
+        },
+      });
+      expect(res.status).toEqual(200);
+      expect(res.body.result).toEqual('ok');
+      expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
+      const newSubscription = await Subscription.findByPk(mockWatchId);
+      expect((new Date(newSubscription.messageReceivedAt)).getTime()).toEqual((new Date(mockMessagePublishTime)).getTime());
+      googleFormScope.done();
+      googleFormResponseScope.done();
+      webhookScope.done();
+    });
+
     it('should send card to webhook uri successfully for question group item form', async () => {
       const newPublishTime = '2021-03-31T02:34:08.053Z';
       const googleFormScope = nock('https://forms.googleapis.com')
