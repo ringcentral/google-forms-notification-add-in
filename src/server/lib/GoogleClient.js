@@ -17,7 +17,6 @@ class GoogleClient {
     const query = querystring.stringify({
       scope: scopes.join(' '),
       access_type: 'offline',
-      include_granted_scopes: 'true',
       response_type: 'code',
       redirect_uri: `${process.env.APP_SERVER}${constants.route.forThirdParty.AUTH_CALLBACK}`,
       client_id: process.env.GOOGLE_CLIENT_ID,
