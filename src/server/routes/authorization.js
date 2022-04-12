@@ -102,6 +102,11 @@ async function generateToken(req, res) {
       res.send(e.details);
       return;
     }
+    if (e.message === 'invalidScope') {
+      res.status(403);
+      res.send('invalid scope');
+      return;
+    }
     console.error(e);
     res.status(500);
     res.send('internal error');

@@ -17,7 +17,6 @@ class GoogleClient {
     const query = querystring.stringify({
       scope: scopes.join(' '),
       access_type: 'offline',
-      include_granted_scopes: 'true',
       response_type: 'code',
       redirect_uri: `${process.env.APP_SERVER}${constants.route.forThirdParty.AUTH_CALLBACK}`,
       client_id: process.env.GOOGLE_CLIENT_ID,
@@ -35,6 +34,14 @@ class GoogleClient {
     const code = url.searchParams.get('code');
     if (!code) {
       throw new Error('noCode');
+    }
+    const scope = url.searchParams.get('scope');
+    if (
+      !scope ||
+      scope.indexOf('forms.responses.readonly') === -1 ||
+      scope.indexOf('forms.body.readonly') === -1
+    ) {
+      throw new Error('invalidScope');
     }
     const response = await axios.post(
       process.env.GOOGLE_ACCESS_TOKEN_URI,

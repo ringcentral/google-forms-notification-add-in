@@ -32,6 +32,7 @@ describe('Authorization', () => {
 
   describe('generate token', () => {
     let userId = 'newGoogleUserId';
+    let scope = 'profile%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/forms.responses.readonly%20https://www.googleapis.com/auth/forms.body.readonly';
 
     afterAll(async () => {
       await User.destroy({ where: { id: userId } });
@@ -59,12 +60,36 @@ describe('Authorization', () => {
       expect(res.text).toContain('code is required');
     });
 
+    it('should send invalid scope error', async () => {
+      const res = await request(server).post('/generate-token').send({
+        callbackUri: 'http://test.com/oauth-callback?code=xxx',
+      });
+      expect(res.status).toEqual(403);
+      expect(res.text).toContain('invalid scope');
+    });
+
+    it('should send invalid scope error without body readonly', async () => {
+      const res = await request(server).post('/generate-token').send({
+        callbackUri: 'http://test.com/oauth-callback?code=xxx&scope=profile%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/forms.responses.readonly',
+      });
+      expect(res.status).toEqual(403);
+      expect(res.text).toContain('invalid scope');
+    });
+
+    it('should send invalid scope error without responses readonly', async () => {
+      const res = await request(server).post('/generate-token').send({
+        callbackUri: 'http://test.com/oauth-callback?code=xxx&scope=profile%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/forms.body.readonly',
+      });
+      expect(res.status).toEqual(403);
+      expect(res.text).toContain('invalid scope');
+    });
+
     it('should send auth error when token api without token', async () => {
       const googleAuthScope = nock(googleTokenDomain)
         .post(googleTokenPath)
         .reply(200, {});
       const res = await request(server).post('/generate-token').send({
-        callbackUri: 'http://test.com/oauth-callback?code=test_code',
+        callbackUri: `http://test.com/oauth-callback?code=test_code&scope=${scope}`,
       });
       expect(res.status).toEqual(403);
       expect(res.text).toContain('auth error');
@@ -76,7 +101,7 @@ describe('Authorization', () => {
         .post(googleTokenPath)
         .reply(502);
       const res = await request(server).post('/generate-token').send({
-        callbackUri: 'http://test.com/oauth-callback?code=test_code',
+        callbackUri: `http://test.com/oauth-callback?code=test_code&scope=${scope}`,
       });
       expect(res.status).toEqual(500);
       expect(res.text).toContain('internal error');
@@ -99,7 +124,7 @@ describe('Authorization', () => {
           sub: userId,
         });
       const res = await request(server).post('/generate-token').send({
-        callbackUri: 'http://test.com/oauth-callback?code=test_code',
+        callbackUri: `http://test.com/oauth-callback?code=test_code&scope=${scope}`,
       });
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).authorize).toEqual(true);
@@ -128,7 +153,7 @@ describe('Authorization', () => {
           sub: userId,
         });
       const res = await request(server).post('/generate-token').send({
-        callbackUri: 'http://test.com/oauth-callback?code=test_code',
+        callbackUri: `http://test.com/oauth-callback?code=test_code&scope=${scope}`,
       });
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).authorize).toEqual(true);
@@ -158,7 +183,7 @@ describe('Authorization', () => {
           sub: userId,
         });
       const res = await request(server).post('/generate-token').send({
-        callbackUri: 'http://test.com/oauth-callback?code=test_code',
+        callbackUri: `http://test.com/oauth-callback?code=test_code&scope=${scope}`,
       });
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).authorize).toEqual(true);

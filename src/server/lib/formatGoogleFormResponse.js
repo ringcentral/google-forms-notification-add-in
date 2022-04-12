@@ -109,7 +109,7 @@ function formatGoogleFormResponseIntoCard(form, response) {
   const card = template.expand({
     $root: {
       formId: form.formId,
-      formTitle: form.info.title,
+      formTitle: form.info.title || form.info.documentTitle,
       formUrl,
       responseId: response.id,
       responseUrl: `${formUrl}#response=${response.responseId}`,

@@ -96,7 +96,7 @@ function FormItem({ form, onDelete }) {
   return (
     <FormLine>
       <FormTitle variant="body1" color="textPrimary">
-        {form.info.title}
+        {form.info.title || form.info.documentTitle}
       </FormTitle>
       <RcIconButton
         symbol={InfoBorder}
