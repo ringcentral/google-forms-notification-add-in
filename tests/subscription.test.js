@@ -97,39 +97,10 @@ describe('Subscription', () => {
       const googleFormScope = nock('https://forms.googleapis.com')
         .get(`/v1/forms/${mockFormId}`)
         .reply(200, formData);
-      const googleFormWatchesScope = nock('https://forms.googleapis.com')
-        .get(`/v1/forms/${mockFormId}/watches`)
-        .reply(200, {
-          watches: [],
-        });
       const res = await request(server).get(`/get-form-data?token=${jwtToken}&formIds=${formIds}`);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).forms.length).toEqual(1);
       expect(JSON.parse(res.text).forms[0].id).toEqual(formData.id);
-      googleFormWatchesScope.done();
-      googleFormScope.done();
-    });
-
-    it('should return form data successfully with DuplicateError', async () => {
-      const jwtToken = jwt.generateJwt({
-        id: user.id,
-      });
-      const mockFormId = 'mockFormId';
-      const formIds = [mockFormId].join(',');
-      const googleFormScope = nock('https://forms.googleapis.com')
-        .get(`/v1/forms/${mockFormId}`)
-        .reply(200, formData);
-      const googleFormWatchesScope = nock('https://forms.googleapis.com')
-        .get(`/v1/forms/${mockFormId}/watches`)
-        .reply(200, {
-          watches: [{}],
-        });
-      const res = await request(server).get(`/get-form-data?token=${jwtToken}&formIds=${formIds}`);
-      expect(res.status).toEqual(200);
-      expect(JSON.parse(res.text).forms.length).toEqual(1);
-      expect(JSON.parse(res.text).forms[0].id).toEqual(formData.id);
-      expect(JSON.parse(res.text).forms[0].error).toEqual('DuplicateError');
-      googleFormWatchesScope.done();
       googleFormScope.done();
     });
 
@@ -152,11 +123,6 @@ describe('Subscription', () => {
       const googleFormScope = nock('https://forms.googleapis.com')
         .get(`/v1/forms/${mockFormId}`)
         .reply(200, formData);
-      const googleFormWatchesScope = nock('https://forms.googleapis.com')
-        .get(`/v1/forms/${mockFormId}/watches`)
-        .reply(200, {
-          watches: [],
-        });
       const res = await request(server).get(`/get-form-data?token=${jwtToken}&formIds=${formIds}`);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).forms.length).toEqual(1);
@@ -164,7 +130,6 @@ describe('Subscription', () => {
       const newUser = await User.findByPk(user.id);
       expect(newUser.accessToken).toEqual('newAccessToken1');
       googleRefreshAuthScope.done();
-      googleFormWatchesScope.done();
       googleFormScope.done();
     });
 
@@ -344,8 +309,9 @@ describe('Subscription', () => {
       const subscription = await Subscription.findByPk(mockWatchId);
       expect(subscription.userId).toEqual(user.id);
       expect(subscription.formId).toEqual(mockFormId);
-      expect(subscription.rcWebhookUri).toEqual(mockRCWebhookUri);
-      expect(subscription.rcWebhookId).toEqual(mockRCWebhookId);
+      expect(subscription.rcWebhookList.length).toEqual(1);
+      expect(subscription.rcWebhookList[0].uri).toEqual(mockRCWebhookUri);
+      expect(subscription.rcWebhookList[0].id).toEqual(mockRCWebhookId);
       const newUser = await User.findByPk(user.id);
       expect(newUser.subscriptions.length).toEqual(1);
       expect(newUser.subscriptions[0].id).toEqual(mockWatchId);
@@ -390,8 +356,9 @@ describe('Subscription', () => {
       const subscription = await Subscription.findByPk(mockWatchId);
       expect(subscription.userId).toEqual(user.id);
       expect(subscription.formId).toEqual(mockFormId);
-      expect(subscription.rcWebhookUri).toEqual(mockRCWebhookUri);
-      expect(subscription.rcWebhookId).toEqual(mockRCWebhookId);
+      expect(subscription.rcWebhookList.length).toEqual(1);
+      expect(subscription.rcWebhookList[0].uri).toEqual(mockRCWebhookUri);
+      expect(subscription.rcWebhookList[0].id).toEqual(mockRCWebhookId);
       const newUser = await User.findByPk(user.id);
       expect(newUser.accessToken).toEqual('newAccessToken1');
       await Subscription.destroy({
@@ -448,7 +415,11 @@ describe('Subscription', () => {
         id: mockWatchId,
         userId: user.id,
         formId: mockFormId,
-        rcWebhookId: mockRCWebhookId,
+        rcWebhookList: [{
+          id: mockRCWebhookId,
+          uri: mockRCWebhookUri,
+          active: true,
+        }],
         watchExpiredAt: new Date(Date.now() + 3600 * 1000),
         messageReceivedAt: new Date(),
       });
@@ -478,6 +449,8 @@ describe('Subscription', () => {
       expect(JSON.parse(res.text).result).toContain('ok');
       const subscription = await Subscription.findByPk(mockWatchId);
       expect(subscription.watchExpiredAt).toEqual(new Date(newExpiredTime));
+      expect(subscription.rcWebhookList.length).toEqual(1);
+      expect(subscription.rcWebhookList[0].id).toEqual(mockRCWebhookId);
       const newUser = await User.findByPk(user.id);
       expect(newUser.subscriptions.length).toEqual(1);
       expect(newUser.subscriptions[0].id).toEqual(mockWatchId);
@@ -494,7 +467,11 @@ describe('Subscription', () => {
         id: 'otherWatchId',
         userId: user.id,
         formId: 'otherFormId',
-        rcWebhookId: mockRCWebhookId,
+        rcWebhookList: [{
+          id: mockRCWebhookId,
+          uri: mockRCWebhookUri,
+          active: true,
+        }],
         watchExpiredAt: new Date(Date.now() + 3600 * 1000),
         messageReceivedAt: new Date(),
       });
@@ -524,6 +501,9 @@ describe('Subscription', () => {
       expect(JSON.parse(res.text).result).toContain('ok');
       const subscription = await Subscription.findByPk(mockWatchId);
       expect(subscription.watchExpiredAt).toEqual(new Date(newExpiredTime));
+      expect(subscription.rcWebhookList.length).toEqual(1);
+      expect(subscription.rcWebhookList[0].uri).toEqual(mockRCWebhookUri);
+      expect(subscription.rcWebhookList[0].id).toEqual(mockRCWebhookId);
       const newUser = await User.findByPk(user.id);
       expect(newUser.subscriptions.length).toEqual(2);
       expect(newUser.subscriptions.find(sub => sub.id === mockWatchId).id).toEqual(mockWatchId);
@@ -540,7 +520,11 @@ describe('Subscription', () => {
         id: 'otherWatchId',
         userId: user.id,
         formId: mockFormId,
-        rcWebhookId: mockRCWebhookId,
+        rcWebhookList: [{
+          id: mockRCWebhookId,
+          uri: mockRCWebhookUri,
+          active: true,
+        }],
         watchExpiredAt: new Date(Date.now() - 3600 * 1000),
         messageReceivedAt: new Date(),
       });
@@ -570,6 +554,9 @@ describe('Subscription', () => {
       expect(JSON.parse(res.text).result).toContain('ok');
       const subscription = await Subscription.findByPk(mockWatchId);
       expect(subscription.watchExpiredAt).toEqual(new Date(newExpiredTime));
+      expect(subscription.rcWebhookList.length).toEqual(1);
+      expect(subscription.rcWebhookList[0].uri).toEqual(mockRCWebhookUri);
+      expect(subscription.rcWebhookList[0].id).toEqual(mockRCWebhookId);
       const newUser = await User.findByPk(user.id);
       expect(newUser.subscriptions.length).toEqual(1);
       expect(newUser.subscriptions[0].id).toEqual(mockWatchId);
@@ -586,7 +573,11 @@ describe('Subscription', () => {
         id: 'otherWatchId',
         userId: user.id,
         formId: 'otherFormId',
-        rcWebhookId: 'otherWebhookId',
+        rcWebhookList: [{
+          id: 'otherWebhookId',
+          uri: 'otherWebhookUri',
+          active: true,
+        }],
         watchExpiredAt: new Date(Date.now() + 3600 * 1000),
         messageReceivedAt: new Date(),
       });
@@ -616,6 +607,8 @@ describe('Subscription', () => {
       expect(JSON.parse(res.text).result).toContain('ok');
       const subscription = await Subscription.findByPk(mockWatchId);
       expect(!!subscription).toEqual(false);
+      const otherSubscription = await Subscription.findByPk('otherWatchId');
+      expect(!!otherSubscription).toEqual(true);
       const newUser = await User.findByPk(user.id);
       expect(newUser.subscriptions.length).toEqual(1);
       expect(newUser.subscriptions[0].id).toEqual('otherWatchId');
@@ -623,6 +616,62 @@ describe('Subscription', () => {
         where: { id: 'otherWatchId' },
       });
       googleFormWatchesScope.done();
+    });
+
+    it('should subscribe successfully with existing subscription and different webhook id', async () => {
+      const mockFormId = 'mockFormId';
+      const mockWatchId = 'mockWatchId';
+      await Subscription.create({
+        id: mockWatchId,
+        userId: user.id,
+        formId: mockFormId,
+        rcWebhookList: [{
+          id: 'otherWebhookId',
+          uri: mockRCWebhookUri,
+          active: true,
+        }],
+        watchExpiredAt: new Date(Date.now() + 3600 * 1000),
+        messageReceivedAt: new Date(),
+      });
+      user.subscriptions = [{
+        id: mockWatchId,
+        formId: mockFormId,
+        rcWebhookId: 'otherWebhookId',
+      }];
+      await user.save();
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const newExpiredTime = (new Date(Date.now() + 7200 * 1000)).toISOString();
+      const googleFormRenewScope = nock('https://forms.googleapis.com')
+        .post(`/v1/forms/${mockFormId}/watches/${mockWatchId}:renew`)
+        .reply(200, {
+          id: mockWatchId,
+          expireTime: newExpiredTime,
+          createTime: '2022-01-01T00:00:00.000Z',
+        });
+      const res = await request(server).post('/subscribe').send({
+        token: jwtToken,
+        rcWebhookUri: mockRCWebhookUri,
+        formIds: mockFormId,
+      });
+      expect(res.status).toEqual(200);
+      expect(JSON.parse(res.text).result).toContain('ok');
+      const subscription = await Subscription.findByPk(mockWatchId);
+      expect(subscription.watchExpiredAt).toEqual(new Date(newExpiredTime));
+      expect(subscription.rcWebhookList.length).toEqual(2);
+      expect(subscription.rcWebhookList[1].id).toEqual('otherWebhookId');
+      expect(subscription.rcWebhookList[0].id).toEqual(mockRCWebhookId);
+      const newUser = await User.findByPk(user.id);
+      expect(newUser.subscriptions.length).toEqual(2);
+      expect(newUser.subscriptions[0].id).toEqual(mockWatchId);
+      expect(newUser.subscriptions[0].rcWebhookId).toEqual(mockRCWebhookId);
+      expect(newUser.subscriptions[1].id).toEqual(mockWatchId);
+      expect(newUser.subscriptions[1].rcWebhookId).toEqual('otherWebhookId');
+      await Subscription.destroy({
+        where: { id: mockWatchId },
+      });
+      googleFormRenewScope.done();
     });
   });
 
@@ -702,7 +751,11 @@ describe('Subscription', () => {
         id: mockWatchId,
         userId: user.id,
         formId: mockFormId,
-        rcWebhookId: mockRCWebhookId,
+        rcWebhookList: [{
+          id: mockRCWebhookId,
+          uri: mockRCWebhookUri,
+          active: true,
+        }],
         watchExpiredAt: new Date(Date.now() + 3600 * 1000),
         messageReceivedAt: new Date(),
       });
@@ -737,7 +790,11 @@ describe('Subscription', () => {
         id: mockWatchId,
         userId: user.id,
         formId: mockFormId,
-        rcWebhookId: mockRCWebhookId,
+        rcWebhookList: [{
+          id: mockRCWebhookId,
+          uri: mockRCWebhookUri,
+          active: true,
+        }],
         watchExpiredAt: new Date(Date.now() - 3600 * 1000),
         messageReceivedAt: new Date(),
       });
@@ -768,7 +825,11 @@ describe('Subscription', () => {
         id: mockWatchId,
         userId: user.id,
         formId: mockFormId,
-        rcWebhookId: mockRCWebhookId,
+        rcWebhookList: [{
+          id: mockRCWebhookId,
+          uri: mockRCWebhookUri,
+          active: true,
+        }],
         watchExpiredAt: new Date(Date.now() + 3600 * 1000),
         messageReceivedAt: new Date(),
       });
@@ -798,6 +859,53 @@ describe('Subscription', () => {
       googleFormWatchDeleteScope.done();
     });
 
+    it('should only delete subscription, not delete watch when there are other webhook', async () => {
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const mockFormId = 'mockFormId';
+      const mockWatchId = 'mockWatchId';
+      await Subscription.create({
+        id: mockWatchId,
+        userId: user.id,
+        formId: mockFormId,
+        rcWebhookList: [{
+          id: mockRCWebhookId,
+          uri: mockRCWebhookUri,
+          active: true,
+        }, {
+          id: 'otherRcWebhookId',
+          uri: 'otherRcWebhookUri',
+          active: true,
+        }],
+        watchExpiredAt: new Date(Date.now() + 3600 * 1000),
+        messageReceivedAt: new Date(),
+      });
+      user.subscriptions = [{
+        id: mockWatchId,
+        formId: mockFormId,
+        rcWebhookId: mockRCWebhookId,
+      }, {
+        id: mockWatchId,
+        formId: mockFormId,
+        rcWebhookId: 'otherRcWebhookId',
+      }];
+      await user.save();
+      const res = await request(server).delete('/subscribe').send({
+        token: jwtToken,
+        rcWebhookUri: mockRCWebhookUri,
+        formId: mockFormId,
+      });
+      expect(res.status).toEqual(200);
+      expect(JSON.parse(res.text).result).toEqual('ok');
+      const newUser = await User.findByPk(user.id);
+      expect(newUser.subscriptions.length).toEqual(1);
+      const newSubscription = await Subscription.findByPk(mockWatchId);
+      expect(newSubscription.rcWebhookList.length).toEqual(1);
+      expect(newSubscription.rcWebhookList[0].id).toEqual('otherRcWebhookId');
+      await Subscription.destroy({ where: { id: mockWatchId } });
+    });
+
     it('should refresh token and delete subscription successfully', async () => {
       user.tokenExpiredAt = new Date(Date.now() - 3600 * 1000);
       await user.save();
@@ -810,7 +918,11 @@ describe('Subscription', () => {
         id: mockWatchId,
         userId: user.id,
         formId: mockFormId,
-        rcWebhookId: mockRCWebhookId,
+        rcWebhookList: [{
+          id: mockRCWebhookId,
+          uri: mockRCWebhookUri,
+          active: true,
+        }],
         watchExpiredAt: new Date(Date.now() + 3600 * 1000),
         messageReceivedAt: new Date(),
       });
@@ -857,7 +969,11 @@ describe('Subscription', () => {
         id: mockWatchId,
         userId: user.id,
         formId: mockFormId,
-        rcWebhookId: mockRCWebhookId,
+        rcWebhookList: [{
+          id: mockRCWebhookId,
+          uri: mockRCWebhookUri,
+          active: true,
+        }],
         watchExpiredAt: new Date(Date.now() + 3600 * 1000),
         messageReceivedAt: new Date(),
       });
@@ -899,7 +1015,11 @@ describe('Subscription', () => {
         id: mockWatchId,
         userId: user.id,
         formId: mockFormId,
-        rcWebhookId: mockRCWebhookId,
+        rcWebhookList: [{
+          id: mockRCWebhookId,
+          uri: mockRCWebhookUri,
+          active: true,
+        }],
         watchExpiredAt: new Date(Date.now() + 3600 * 1000),
         messageReceivedAt: new Date(),
       });
