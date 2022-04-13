@@ -41,8 +41,8 @@ function getUniqueSubscriptions(subscriptions) {
 async function onUnauthorize(user) {
   const googleClient = new GoogleClient({ token: user.accessToken });
   const subscriptions = user.subscriptions;
-  const subscriptionIds = getUniqueSubscriptions(subscriptions);
-  await Promise.all(subscriptionIds.map(async (subscription) => {
+  const uniqueSubscriptions = getUniqueSubscriptions(subscriptions);
+  await Promise.all(uniqueSubscriptions.map(async (subscription) => {
     try {
       await googleClient.deleteWatch(subscription.formId, subscription.id);
       await Subscription.destroy({ where: { id: subscription.id } });
