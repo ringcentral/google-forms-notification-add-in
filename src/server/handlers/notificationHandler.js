@@ -43,10 +43,13 @@ async function onReceiveNotification(subscription, messageTime) {
     if (subscription.rcWebhookList && subscription.rcWebhookList.length > 0) {
       await Promise.all(subscription.rcWebhookList.map(async rcWebhook => {
         try {
-          await sendAdaptiveCardMessage(rcWebhook.uri, messageCard);
-          // TODO: make webhook inactive when webhook is not found
-          // if (response.data.error && response.data.error.indexOf('Webhook not found') >= -1) {
-          // }
+          const response = await sendAdaptiveCardMessage(rcWebhook.uri, messageCard);
+          if (response.data.error && response.data.error.indexOf('Webhook not found') >= -1) {
+            subscription.rcWebhookList = [{
+              ...rcWebhook,
+              active: false,
+            }].concat(subscription.rcWebhookList.filter((webhook) => webhook.id !== rcWebhook.id));
+          }
         } catch (e) {
           console.error('Error sending message to RC Webhook:');
           console.error(e);
@@ -59,8 +62,20 @@ async function onReceiveNotification(subscription, messageTime) {
       );
     }
   }));
-  subscription.messageReceivedAt = new Date(messageTime);
-  await subscription.save();
+  if (
+    subscription.rcWebhookList &&
+    subscription.rcWebhookList.length > 0 &&
+    subscription.rcWebhookList.filter(rcWebhook => rcWebhook.active).length === 0
+  ) {
+    // webhook is deleted
+    await googleClient.deleteWatch(subscription.formId, subscription.id);
+    await subscription.destroy();
+    user.subscriptions = user.subscriptions.filter(sub => sub.id !== subscription.id);
+    await user.save();
+  } else {
+    subscription.messageReceivedAt = new Date(messageTime);
+    await subscription.save();
+  }
 }
 
 exports.onReceiveNotification = onReceiveNotification;
