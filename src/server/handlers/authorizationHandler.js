@@ -30,10 +30,19 @@ async function onAuthorize(accessToken, refreshToken, expires) {
   return userId;
 }
 
+function getUniqueSubscriptions(subscriptions) {
+  const data = {};
+  subscriptions.forEach((subscription) => {
+    data[subscription.id] = subscription;
+  });
+  return Object.keys(data).map((key) => data[key]);
+}
+
 async function onUnauthorize(user) {
   const googleClient = new GoogleClient({ token: user.accessToken });
   const subscriptions = user.subscriptions;
-  await Promise.all(subscriptions.map(async (subscription) => {
+  const subscriptionIds = getUniqueSubscriptions(subscriptions);
+  await Promise.all(subscriptionIds.map(async (subscription) => {
     try {
       await googleClient.deleteWatch(subscription.formId, subscription.id);
       await Subscription.destroy({ where: { id: subscription.id } });

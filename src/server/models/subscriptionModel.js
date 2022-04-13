@@ -20,6 +20,10 @@ exports.Subscription = sequelize.define('subscriptions', {
   rcWebhookUri:{
     type: Sequelize.STRING,
   },
+  rcWebhookList: {
+    type: Sequelize.JSON,
+    defaultValue: [],
+  },
   messageReceivedAt: {
     type: Sequelize.DATE,
   },
