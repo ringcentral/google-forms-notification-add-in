@@ -40,11 +40,11 @@ async function onReceiveNotification(subscription, messageTime) {
 
   const messageCards = responses.map((response) => formatGoogleFormResponseIntoCard(form, response));
   await Promise.all(messageCards.map(async messageCard => {
-    if (subscription.rcWebhookList.length > 0) {
+    if (subscription.rcWebhookList && subscription.rcWebhookList.length > 0) {
       await Promise.all(subscription.rcWebhookList.map(async rcWebhook => {
         try {
           await sendAdaptiveCardMessage(rcWebhook.uri, messageCard);
-          // TODO: make webhook inactive
+          // TODO: make webhook inactive when webhook is not found
           // if (response.data.error && response.data.error.indexOf('Webhook not found') >= -1) {
           // }
         } catch (e) {
