@@ -356,12 +356,67 @@ describe('Authorization', () => {
         id: watchId,
         userId: user.id,
         formId,
-        rcWebhookId: 'test_rcWebhookId',
-      })
+        rcWebhookList: [{
+          id: 'test_webhookId',
+          uri: 'test_webhookUri',
+          active: true,
+        }],
+      });
       user.subscriptions = [{
         id: watchId,
         formId,
         rcWebhookId: 'test_webhook_id'
+      }];
+      await user.save();
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const googleAuthScope = nock('https://oauth2.googleapis.com')
+        .post((path) => path.includes('/revoke?token='))
+        .reply(200);
+      const googleDestroyWatchScope = nock('https://forms.googleapis.com')
+        .delete(`/v1/forms/${formId}/watches/${watchId}`)
+        .reply(200);
+      const res = await request(server).post('/revoke-token').send({
+        token: jwtToken,
+      });
+      expect(res.status).toEqual(200);
+      expect(JSON.parse(res.text).authorized).toEqual(false);
+      const newUser = await User.findByPk(user.id);
+      expect(newUser.accessToken).toEqual('');
+      expect(newUser.refreshToken).toEqual('');
+      expect(newUser.subscriptions.length).toEqual(0);
+      const subscription = await Subscription.findByPk(watchId);
+      expect(!!subscription).toEqual(false);
+      googleAuthScope.done();
+      googleDestroyWatchScope.done();
+    });
+
+    it('should revoke user successfully and destroy user subscriptions with multiple webhooks', async () => {
+      const formId = 'test_formId';
+      const watchId = 'test_subscriptionId';
+      await Subscription.create({
+        id: watchId,
+        userId: user.id,
+        formId,
+        rcWebhookList: [{
+          id: 'test_webhookId',
+          uri: 'test_webhookUri',
+          active: true,
+        }, {
+          id: 'other_webhookId',
+          uri: 'other_webhookUri',
+          active: true,
+        }],
+      });
+      user.subscriptions = [{
+        id: watchId,
+        formId,
+        rcWebhookId: 'test_webhook_id',
+      }, {
+        id: watchId,
+        formId,
+        rcWebhookId: 'other_webhookUri',
       }];
       await user.save();
       const jwtToken = jwt.generateJwt({
@@ -395,7 +450,11 @@ describe('Authorization', () => {
         id: watchId,
         userId: user.id,
         formId,
-        rcWebhookId: 'test_rcWebhookId',
+        rcWebhookList: [{
+          id: 'test_webhook_id',
+          uri: 'test_webhookUri',
+          active: true,
+        }],
       })
       user.subscriptions = [{
         id: watchId,
@@ -529,6 +588,11 @@ describe('Authorization', () => {
           formId: 'test_formId_1',
           rcWebhookId: 'otherRcWebhookId',
         },
+        {
+          id: 'test_subscriptionId',
+          formId: 'test_formId',
+          rcWebhookId: 'otherRcWebhookId',
+        }
       ];
       await user.save();
       const jwtToken = jwt.generateJwt({

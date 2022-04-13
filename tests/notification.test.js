@@ -22,15 +22,19 @@ describe('Notification', () => {
   const mockUserId  = 'knownUserId';
   const mockFormId = 'knownFormId';
   const mockMessagePublishTime = '2021-03-31T01:34:08.053Z';
+  let subscription;
 
   beforeAll(async () => {
     // Mock data on subscriptions table
-    await Subscription.create({
+    subscription = await Subscription.create({
       id: mockWatchId,
       userId: mockUserId,
       formId: mockFormId,
-      rcWebhookId: mockRCWebhookId,
-      rcWebhookUri: `${mockDomain}${mockRcWebhookEndpoint}`
+      rcWebhookList: [{
+        id: mockRCWebhookId,
+        uri: `${mockDomain}${mockRcWebhookEndpoint}`,
+        active: true,
+      }],
     });
   });
 
@@ -214,6 +218,91 @@ describe('Notification', () => {
     });
 
     it('should send card to webhook uri successfully', async () => {
+      const googleFormScope = nock('https://forms.googleapis.com')
+        .get(`/v1/forms/${mockFormId}`)
+        .reply(200, formData);
+      const googleFormResponseScope = nock('https://forms.googleapis.com')
+        .get(uri => uri.includes(`/v1/forms/${mockFormId}/responses`))
+        .reply(200, formResponsesData);
+      const webhookScope = nock(mockDomain)
+        .post(mockRcWebhookEndpoint)
+        .reply(200, { result: 'OK' });
+      let requestBody = null;
+      webhookScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+        requestBody = JSON.parse(reqBody);
+      });
+      const res = await request(server).post('/notification').send({
+        message: {
+          attributes: {
+            watchId: mockWatchId,
+          },
+          publishTime: mockMessagePublishTime,
+        },
+      });
+      expect(res.status).toEqual(200);
+      expect(res.body.result).toEqual('ok');
+      expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
+      const newSubscription = await Subscription.findByPk(mockWatchId);
+      expect((new Date(newSubscription.messageReceivedAt)).getTime()).toEqual((new Date(mockMessagePublishTime)).getTime());
+      googleFormScope.done();
+      googleFormResponseScope.done();
+      webhookScope.done();
+    });
+
+    it('should send card to multiple webhook uri successfully', async () => {
+      subscription.rcWebhookList = [
+        ...subscription.rcWebhookList,
+        {
+          id: 'otherRcWebhookId',
+          uri: `${mockDomain}/webhook/${mockRCWebhookId}`,
+          active: true,
+        },
+      ]
+      await subscription.save();
+      const googleFormScope = nock('https://forms.googleapis.com')
+        .get(`/v1/forms/${mockFormId}`)
+        .reply(200, formData);
+      const googleFormResponseScope = nock('https://forms.googleapis.com')
+        .get(uri => uri.includes(`/v1/forms/${mockFormId}/responses`))
+        .reply(200, formResponsesData);
+      const webhookScope = nock(mockDomain)
+        .post(mockRcWebhookEndpoint)
+        .reply(200, { result: 'OK' });
+      const webhookScope1 = nock(mockDomain)
+        .post(`/webhook/${mockRCWebhookId}`)
+        .reply(200, { result: 'OK' });
+      let requestBody = null;
+      webhookScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+        requestBody = JSON.parse(reqBody);
+      });
+      let requestBody1 = null;
+      webhookScope1.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+        requestBody1 = JSON.parse(reqBody);
+      });
+      const res = await request(server).post('/notification').send({
+        message: {
+          attributes: {
+            watchId: mockWatchId,
+          },
+          publishTime: mockMessagePublishTime,
+        },
+      });
+      expect(res.status).toEqual(200);
+      expect(res.body.result).toEqual('ok');
+      expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
+      expect(requestBody1.attachments[0].type).toContain('AdaptiveCard');
+      const newSubscription = await Subscription.findByPk(mockWatchId);
+      expect((new Date(newSubscription.messageReceivedAt)).getTime()).toEqual((new Date(mockMessagePublishTime)).getTime());
+      googleFormScope.done();
+      googleFormResponseScope.done();
+      webhookScope.done();
+      webhookScope1.done();
+    });
+
+    it('should send card to webhook uri when rcWebhookList is empty', async () => {
+      subscription.rcWebhookList = null;
+      subscription.rcWebhookUri = `${mockDomain}${mockRcWebhookEndpoint}`;
+      await subscription.save();
       const googleFormScope = nock('https://forms.googleapis.com')
         .get(`/v1/forms/${mockFormId}`)
         .reply(200, formData);

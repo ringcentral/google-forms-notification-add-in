@@ -40,13 +40,27 @@ async function onReceiveNotification(subscription, messageTime) {
 
   const messageCards = responses.map((response) => formatGoogleFormResponseIntoCard(form, response));
   await Promise.all(messageCards.map(async messageCard => {
-    await sendAdaptiveCardMessage(
-      subscription.rcWebhookUri,
-      messageCard
-    );
-    subscription.messageReceivedAt = new Date(messageTime);
-    await subscription.save();
+    if (subscription.rcWebhookList && subscription.rcWebhookList.length > 0) {
+      await Promise.all(subscription.rcWebhookList.map(async rcWebhook => {
+        try {
+          await sendAdaptiveCardMessage(rcWebhook.uri, messageCard);
+          // TODO: make webhook inactive when webhook is not found
+          // if (response.data.error && response.data.error.indexOf('Webhook not found') >= -1) {
+          // }
+        } catch (e) {
+          console.error('Error sending message to RC Webhook:');
+          console.error(e);
+        }
+      }));
+    } else if (subscription.rcWebhookUri) {
+      await sendAdaptiveCardMessage(
+        subscription.rcWebhookUri,
+        messageCard
+      );
+    }
   }));
+  subscription.messageReceivedAt = new Date(messageTime);
+  await subscription.save();
 }
 
 exports.onReceiveNotification = onReceiveNotification;

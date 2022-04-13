@@ -3,13 +3,10 @@ const { Subscription } = require('../models/subscriptionModel');
 
 async function onSubscribe(user, rcWebhookId, rcWebhookUri, formIds) {
   let userSubscriptions = [...user.subscriptions];
-  const existedSubscriptions = userSubscriptions.filter(sub => (
-    sub.rcWebhookId === rcWebhookId
-  ));
   const googleClient = new GoogleClient({ token: user.accessToken });
   await Promise.all(formIds.map(async (formId) => {
     try {
-      const existedSubscription = existedSubscriptions.find((sub) => sub.formId === formId);
+      const existedSubscription = userSubscriptions.find((sub) => sub.formId === formId);
       if (existedSubscription) {
         const subscription = await Subscription.findByPk(existedSubscription.id);
         if (subscription) {
@@ -17,9 +14,19 @@ async function onSubscribe(user, rcWebhookId, rcWebhookUri, formIds) {
           if (watchExpiredAt.getTime() > Date.now()) {
             const { expireTime } = await googleClient.renewWatch(formId, subscription.id);
             subscription.watchExpiredAt = new Date(expireTime);
-            subscription.rcWebhookUri = rcWebhookUri;
+            const newRcWebhookList = [{
+              id: rcWebhookId,
+              uri: rcWebhookUri,
+              active: true,
+            }].concat(subscription.rcWebhookList.filter((rcWebhook) => rcWebhook.id !== rcWebhookId));
+            subscription.rcWebhookList = newRcWebhookList;
             subscription.messageReceivedAt = new Date();
             await subscription.save();
+            userSubscriptions = [{
+              id: subscription.id,
+              formId,
+              rcWebhookId,
+            }].concat(userSubscriptions.filter(sub => !(sub.id === existedSubscription.id && sub.rcWebhookId === rcWebhookId)));
             return;
           }
           await subscription.destroy();
@@ -31,8 +38,11 @@ async function onSubscribe(user, rcWebhookId, rcWebhookUri, formIds) {
         id,
         userId: user.id,
         formId: formId,
-        rcWebhookId: rcWebhookId,
-        rcWebhookUri: rcWebhookUri,
+        rcWebhookList: [{
+          id: rcWebhookId,
+          uri: rcWebhookUri,
+          active: true,
+        }],
         watchExpiredAt: new Date(expireTime),
         messageReceivedAt: new Date(createTime),
       });
@@ -64,11 +74,18 @@ async function onDeleteSubscription(user, rcWebhookId, formId) {
   await Promise.all(existedSubscriptions.map(async (sub) => {
     const subscription = await Subscription.findByPk(sub.id);
     if (subscription) {
-      const watchExpiredAt = new Date(subscription.watchExpiredAt);
-      if (watchExpiredAt.getTime() > Date.now()) {
-        await googleClient.deleteWatch(formId, subscription.id);
+      if (subscription.rcWebhookList.length === 1) {
+        const watchExpiredAt = new Date(subscription.watchExpiredAt);
+        if (watchExpiredAt.getTime() > Date.now()) {
+          await googleClient.deleteWatch(formId, subscription.id);
+        }
+        await subscription.destroy();
+      } else {
+        subscription.rcWebhookList = subscription.rcWebhookList.filter((rcWebhook) => rcWebhook.id !== rcWebhookId)
+        await subscription.save();
       }
-      await subscription.destroy();
+      userSubscriptions = userSubscriptions.filter(userSub => !(userSub.id === sub.id && userSub.rcWebhookId === rcWebhookId));
+      return;
     }
     userSubscriptions = userSubscriptions.filter(userSub => userSub.id !== sub.id);
   }));
