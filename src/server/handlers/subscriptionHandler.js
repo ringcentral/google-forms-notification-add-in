@@ -84,8 +84,10 @@ async function onDeleteSubscription(user, rcWebhookId, formId) {
         subscription.rcWebhookList = subscription.rcWebhookList.filter((rcWebhook) => rcWebhook.id !== rcWebhookId)
         await subscription.save();
       }
+      userSubscriptions = userSubscriptions.filter(userSub => !(userSub.id === sub.id && userSub.rcWebhookId === rcWebhookId));
+      return;
     }
-    userSubscriptions = userSubscriptions.filter(userSub => !(userSub.id === sub.id && userSub.rcWebhookId === rcWebhookId));
+    userSubscriptions = userSubscriptions.filter(userSub => userSub.id !== sub.id);
   }));
   user.subscriptions = userSubscriptions;
   await user.save();
