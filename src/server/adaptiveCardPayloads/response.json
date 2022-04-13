@@ -89,7 +89,7 @@
                     "items": [
                         {
                             "type": "TextBlock",
-                            "text": "[Feedback](https://github.com/ringcentral/google-forms-notification-add-in/issues)",
+                            "text": "[Feedback](https://forms.gle/ZKj8cHCxAfj4FXQh7)",
                             "wrap": true,
                             "size": "Small"
                         }

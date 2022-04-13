@@ -365,7 +365,7 @@ export function App({ integrationHelper, client, analytics }) {
           />
         </Container>
         <FloatingLink
-          href="https://github.com/ringcentral/google-forms-notification-add-in/issues"
+          href="https://forms.gle/ZKj8cHCxAfj4FXQh7"
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => {
