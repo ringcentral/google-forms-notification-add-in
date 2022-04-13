@@ -24,7 +24,7 @@ describe('Notification', () => {
   const mockMessagePublishTime = '2021-03-31T01:34:08.053Z';
   let subscription;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     // Mock data on subscriptions table
     subscription = await Subscription.create({
       id: mockWatchId,
@@ -38,7 +38,7 @@ describe('Notification', () => {
     });
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     // Clean up
     await Subscription.destroy({
       where: {
@@ -254,10 +254,10 @@ describe('Notification', () => {
         ...subscription.rcWebhookList,
         {
           id: 'otherRcWebhookId',
-          uri: `${mockDomain}/webhook/${mockRCWebhookId}`,
+          uri: `${mockDomain}/webhook/otherRcWebhookId`,
           active: true,
         },
-      ]
+      ];
       await subscription.save();
       const googleFormScope = nock('https://forms.googleapis.com')
         .get(`/v1/forms/${mockFormId}`)
@@ -269,7 +269,7 @@ describe('Notification', () => {
         .post(mockRcWebhookEndpoint)
         .reply(200, { result: 'OK' });
       const webhookScope1 = nock(mockDomain)
-        .post(`/webhook/${mockRCWebhookId}`)
+        .post(`/webhook/otherRcWebhookId`)
         .reply(200, { result: 'OK' });
       let requestBody = null;
       webhookScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
@@ -297,6 +297,129 @@ describe('Notification', () => {
       googleFormResponseScope.done();
       webhookScope.done();
       webhookScope1.done();
+    });
+
+    it('should set webhook inactive when webhook response with not found', async () => {
+      subscription.rcWebhookList = [
+        ...subscription.rcWebhookList,
+        {
+          id: 'otherRcWebhookId',
+          uri: `${mockDomain}/webhook/otherRcWebhookId`,
+          active: true,
+        },
+      ]
+      await subscription.save();
+      const googleFormScope = nock('https://forms.googleapis.com')
+        .get(`/v1/forms/${mockFormId}`)
+        .reply(200, formData);
+      const googleFormResponseScope = nock('https://forms.googleapis.com')
+        .get(uri => uri.includes(`/v1/forms/${mockFormId}/responses`))
+        .reply(200, formResponsesData);
+      const webhookScope = nock(mockDomain)
+        .post(mockRcWebhookEndpoint)
+        .reply(200, { result: 'OK' });
+      const webhookScope1 = nock(mockDomain)
+        .post(`/webhook/otherRcWebhookId`)
+        .reply(200, { error: `Webhook not found! otherRcWebhookId` });
+      let requestBody = null;
+      webhookScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+        requestBody = JSON.parse(reqBody);
+      });
+      let requestBody1 = null;
+      webhookScope1.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+        requestBody1 = JSON.parse(reqBody);
+      });
+      const res = await request(server).post('/notification').send({
+        message: {
+          attributes: {
+            watchId: mockWatchId,
+          },
+          publishTime: mockMessagePublishTime,
+        },
+      });
+      expect(res.status).toEqual(200);
+      expect(res.body.result).toEqual('ok');
+      expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
+      expect(requestBody1.attachments[0].type).toContain('AdaptiveCard');
+      const newSubscription = await Subscription.findByPk(mockWatchId);
+      expect((new Date(newSubscription.messageReceivedAt)).getTime()).toEqual((new Date(mockMessagePublishTime)).getTime());
+      expect(newSubscription.rcWebhookList.length).toEqual(2);
+      expect(newSubscription.rcWebhookList.find(item => item.id === 'otherRcWebhookId').active).toEqual(false);
+      googleFormScope.done();
+      googleFormResponseScope.done();
+      webhookScope.done();
+      webhookScope1.done();
+    });
+
+    it('should destroy subscription when all webhooks inactive', async () => {
+      subscription.rcWebhookList = [
+        ...subscription.rcWebhookList,
+        {
+          id: 'otherRcWebhookId',
+          uri: `${mockDomain}/webhook/otherRcWebhookId`,
+          active: true,
+        },
+      ]
+      await subscription.save();
+      user.subscriptions = [{
+        id: mockWatchId,
+        rcWebhookId: mockRCWebhookId,
+        formId: mockFormId,
+      }, {
+        id: mockWatchId,
+        rcWebhookId: 'otherRcWebhookId',
+        formId: mockFormId,
+      }, {
+        id: 'otherWatchId',
+        rcWebhookId: mockRCWebhookId,
+        formId: 'otherFormId',
+      }];
+      await user.save();
+      const googleFormScope = nock('https://forms.googleapis.com')
+        .get(`/v1/forms/${mockFormId}`)
+        .reply(200, formData);
+      const googleFormResponseScope = nock('https://forms.googleapis.com')
+        .get(uri => uri.includes(`/v1/forms/${mockFormId}/responses`))
+        .reply(200, formResponsesData);
+      const googleFormWatchDeleteScope = nock('https://forms.googleapis.com')
+        .delete(`/v1/forms/${mockFormId}/watches/${mockWatchId}`)
+        .reply(200);
+      const webhookScope = nock(mockDomain)
+        .post(mockRcWebhookEndpoint)
+        .reply(200, { error: `Webhook not found! ${mockRCWebhookId}` });
+      const webhookScope1 = nock(mockDomain)
+        .post(`/webhook/otherRcWebhookId`)
+        .reply(200, { error: `Webhook not found! otherRcWebhookId` });
+      let requestBody = null;
+      webhookScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+        requestBody = JSON.parse(reqBody);
+      });
+      let requestBody1 = null;
+      webhookScope1.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+        requestBody1 = JSON.parse(reqBody);
+      });
+      const res = await request(server).post('/notification').send({
+        message: {
+          attributes: {
+            watchId: mockWatchId,
+          },
+          publishTime: mockMessagePublishTime,
+        },
+      });
+      expect(res.status).toEqual(200);
+      expect(res.body.result).toEqual('ok');
+      expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
+      expect(requestBody1.attachments[0].type).toContain('AdaptiveCard');
+      const newSubscription = await Subscription.findByPk(mockWatchId);
+      expect(!!newSubscription).toEqual(false);
+      const newUser = await User.findByPk(mockUserId);
+      expect(newUser.subscriptions.length).toEqual(1);
+      expect(newUser.subscriptions[0].id).toEqual('otherWatchId');
+      googleFormScope.done();
+      googleFormResponseScope.done();
+      webhookScope.done();
+      webhookScope1.done();
+      googleFormWatchDeleteScope.done();
     });
 
     it('should send card to webhook uri when rcWebhookList is empty', async () => {
