@@ -34,7 +34,8 @@ function mergeForms(oldForms, newForms) {
 }
 
 function getFormIdFromLink(formLink) {
-  const formUrl = formLink.split('?')[0].replace('/edit', '');
+  let formUrl = formLink.split('?')[0];
+  formUrl = formUrl.split('#')[0].replace('/edit', '');
   return formUrl.split('/').pop();
 }
 
