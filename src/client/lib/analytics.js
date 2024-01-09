@@ -12,7 +12,7 @@ mixpanel.track = (...params) => {
   return mixpanel._$$track(...params);
 }
 
-const appName = 'RingCentral for HubSpot Native App'
+const appName = 'Google Forms Add-in'
 
 export class Analytics {
   _ready = false;
