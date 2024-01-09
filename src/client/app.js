@@ -10,7 +10,7 @@ import { Analytics } from './lib/analytics';
 const integrationHelper = new RingCentralNotificationIntegrationHelper()
 const client = new Client(window.clientConfig);
 const analytics = new Analytics({
-  segmentKey: window.clientConfig.segmentKey,
+  mixpanelKey: window.clientConfig.mixpanelKey,
 });
 window.client = client;
 

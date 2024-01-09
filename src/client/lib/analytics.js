@@ -1,17 +1,25 @@
-import Segment from './segment';
+import mixpanel from 'mixpanel-browser';
+
+mixpanel._$$track = mixpanel.track;
+mixpanel.track = (...params) => {
+  const props = params[1] || {};
+  props['$current_url'] = `${window.location.origin}${window.location.pathname}`; // remove sensitive data in url
+  if (params.length === 1) {
+    params.push(props);
+  } else {
+    params[1] = props;
+  }
+  return mixpanel._$$track(...params);
+}
+
+const appName = 'Google Forms Add-in'
 
 export class Analytics {
   _ready = false;
 
-  constructor({ segmentKey } = {}) {
-    this._analytics = Segment();
-    if (segmentKey) {
-      analytics.load(segmentKey, {
-        integrations: {
-          All: true,
-          Mixpanel: true,
-        },
-      });
+  constructor({ mixpanelKey } = {}) {
+    if (mixpanelKey) {
+      mixpanel.init(mixpanelKey);
       this._ready = true;
     }
   }
@@ -20,15 +28,9 @@ export class Analytics {
     if (!this._ready) {
       return;
     }
-    const trackProps = {
-      appName: 'Google Forms Add-in',
+    mixpanel.track(event, {
       ...properties,
-    };
-    analytics.track(event, trackProps, {
-      integrations: {
-        All: true,
-        Mixpanel: true,
-      },
+      appName,
     });
   }
 }

@@ -15,7 +15,7 @@ async function setup(req, res) {
       generateTokenUri: `${process.env.APP_SERVER}${constants.route.forClient.GENERATE_TOKEN}`,
       authRevokeUri: `${process.env.APP_SERVER}${constants.route.forClient.REVOKE_TOKEN}`,
       subscribeUri : `${process.env.APP_SERVER}${constants.route.forClient.SUBSCRIBE}`,
-      segmentKey: process.env.SEGMENT_KEY,
+      mixpanelKey: process.env.MIXPANEL_KEY,
       isBeta: process.env.BETA,
     },
   });
