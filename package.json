@@ -26,7 +26,7 @@
     "deploy": "npm run serverless-deploy"
   },
   "devDependencies": {
-    "@aws-sdk/client-dynamodb": "^3.26.0",
+    "@aws-sdk/client-dynamodb": "^3.490.0",
     "@babel/core": "^7.11.6",
     "@babel/plugin-proposal-class-properties": "^7.3.4",
     "@babel/plugin-proposal-decorators": "^7.3.0",
@@ -59,7 +59,7 @@
     "whatwg-fetch": "^2.0.3"
   },
   "dependencies": {
-    "adaptive-expressions": "^4.14.1",
+    "adaptive-expressions": "^4.21.4",
     "adaptivecards-templating": "^2.1.0",
     "axios": "^0.26.1",
     "dotenv": "6.2.0",
