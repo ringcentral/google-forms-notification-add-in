@@ -8,7 +8,7 @@ const { Subscription } = require('../src/server/models/subscriptionModel');
 const jwt = require('../src/server/lib/jwt');
 const { server } = require('../src/server');
 
-axios.defaults.adapter = require('axios/lib/adapters/http');
+axios.defaults.adapter = 'http';
 
 
 describe('Authorization', () => {

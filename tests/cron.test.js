@@ -5,7 +5,7 @@ const { Subscription } = require('../src/server/models/subscriptionModel');
 const { User } = require('../src/server/models/userModel');
 const { refresh } = require('../src/refreshSubscriptionCron');
 
-axios.defaults.adapter = require('axios/lib/adapters/http');
+axios.defaults.adapter = 'http';
 
 describe('Refresh cron', () => {
   let user;
