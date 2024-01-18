@@ -10,7 +10,7 @@ const formResponsesData = require('./mock-data/responses.json');
 const questionGroupFormData = require('./mock-data/questionGroupForm.json');
 const questionGroupFormResponsesData = require('./mock-data/questionGroupFormResponses.json');
 
-axios.defaults.adapter = require('axios/lib/adapters/http');
+axios.defaults.adapter = 'http';
 
 // Example tests
 describe('Notification', () => {

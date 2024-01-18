@@ -8,7 +8,7 @@ const { User } = require('../src/server/models/userModel');
 
 const formData = require('./mock-data/form.json');
 
-axios.defaults.adapter = require('axios/lib/adapters/http');
+axios.defaults.adapter = 'http';
 
 describe('Subscription', () => {
   let user;
