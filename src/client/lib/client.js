@@ -43,7 +43,13 @@ export class Client {
   }
 
   async getUserInfo() {
-    const response = await fetch(`${this._config.getUserInfoUri}?token=${this.token}&&rcWebhookUri=${this._config.rcWebhookUri}`);
+    const response = await fetch(`${this._config.getUserInfoUri}?rcWebhookUri=${this._config.rcWebhookUri}`, {
+      method: 'GET',
+      headers: {
+        'x-access-token': this.token,
+        'Content-Type': 'application/json',
+      },
+    });
     if (response.status === 401) {
       this.cleanToken();
       throw new Error('Unauthorized');
@@ -59,7 +65,13 @@ export class Client {
     if (!formIds || !formIds.length) {
       return null;
     }
-    const response = await fetch(`${this._config.getFormDataUri}?token=${this.token}&&formIds=${formIds.join(',')}`);
+    const response = await fetch(`${this._config.getFormDataUri}?formIds=${formIds.join(',')}`, {
+      method: 'GET',
+      headers: {
+        'x-access-token': this.token,
+        'Content-Type': 'application/json',
+      },
+    });
     if (response.status === 401) {
       this.cleanToken();
       throw new Error('Unauthorized');

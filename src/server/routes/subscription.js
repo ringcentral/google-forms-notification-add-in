@@ -6,19 +6,7 @@ const { checkAndRefreshAccessToken } = require('../lib/oauth');
 const { getRCWebhookId } = require('../lib/getRCWebhookId');
 
 async function getFormData(req, res) {
-  const jwtToken = req.query.token;
-  if (!jwtToken) {
-    res.status(403);
-    res.send('Error params');
-    return;
-  }
-  const decodedToken = decodeJwt(jwtToken);
-  if (!decodedToken) {
-    res.status(401);
-    res.send('Token invalid.');
-    return;
-  }
-  const userId = decodedToken.id;
+  const userId = req.currentUserId;
   let user;
   try {
     user = await User.findByPk(userId);

@@ -7,6 +7,7 @@ const subscriptionRoute = require('./routes/subscription');
 const notificationRoute = require('./routes/notification');
 const viewRoute = require('./routes/view');
 const constants = require('./lib/constants');
+const { checkAuth } = require('./middlewares/auth');
 
 const app = express()
 app.use(morgan('tiny'))
@@ -21,14 +22,14 @@ app.get(constants.route.forClient.CLIENT_SETUP, viewRoute.setup);
 // authorization
 app.get(constants.route.forClient.OPEN_AUTH_PAGE, authorizationRoute.openAuthPage);
 app.get(constants.route.forThirdParty.AUTH_CALLBACK, authorizationRoute.oauthCallback);
-app.get(constants.route.forClient.GET_USER_INFO, authorizationRoute.getUserInfo);
+app.get(constants.route.forClient.GET_USER_INFO, checkAuth, authorizationRoute.getUserInfo);
 app.post(constants.route.forClient.GENERATE_TOKEN, authorizationRoute.generateToken);
 // revoke
 app.post(constants.route.forClient.REVOKE_TOKEN, authorizationRoute.revokeToken);
 // configure
 app.post(constants.route.forClient.SUBSCRIBE, subscriptionRoute.subscribe);
 app.delete(constants.route.forClient.SUBSCRIBE, subscriptionRoute.deleteSubscription);
-app.get(constants.route.forClient.GET_FORM_DATA, subscriptionRoute.getFormData);
+app.get(constants.route.forClient.GET_FORM_DATA, checkAuth, subscriptionRoute.getFormData);
 // notification
 app.post(constants.route.forThirdParty.NOTIFICATION, notificationRoute.notification);
 // Home page

@@ -12,26 +12,14 @@ async function openAuthPage(req, res) {
 }
 
 async function getUserInfo(req, res) {
-  const jwtToken = req.query.token;
   const rcWebhookUri = req.query.rcWebhookUri;
-  if (!jwtToken) {
-    res.status(403);
-    res.send('Token required.');
-    return;
-  }
-  const decodedToken = decodeJwt(jwtToken);
-  if (!decodedToken) {
-    res.status(401);
-    res.send('Token invalid.');
-    return;
-  }
   const rcWebhookId = getRCWebhookId(rcWebhookUri);
   if (!rcWebhookId) {
     res.status(400);
     res.send('Invalid rcWebhookUri.');
     return;
   }
-  const userId = decodedToken.id;
+  const userId = req.currentUserId;
   const user = await User.findByPk(userId);
   if (!user || !user.accessToken) {
     res.status(401);
