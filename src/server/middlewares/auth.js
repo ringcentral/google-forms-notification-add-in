@@ -1,6 +1,6 @@
 const { decodeJwt } = require('../lib/jwt');
 
-async function checkAuth(req, res, next) {
+function checkAuth(req, res, next) {
   const jwtToken = req.headers['x-access-token'];
   if (!jwtToken) {
     res.status(403);
