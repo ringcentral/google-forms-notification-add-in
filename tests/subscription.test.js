@@ -40,11 +40,13 @@ describe('Subscription', () => {
     it('should return 403 without token', async () => {
       const res = await request(server).get('/get-form-data');
       expect(res.status).toEqual(403);
-      expect(res.text).toContain('Error param');
+      expect(res.text).toContain('Token required.');
     });
 
     it('should return 401 with invalid token', async () => {
-      const res = await request(server).get('/get-form-data?token=xxx');
+      const res = await request(server)
+        .get('/get-form-data')
+        .set('x-access-token', 'xxx');
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid.');
     });
@@ -53,7 +55,9 @@ describe('Subscription', () => {
       const jwtToken = jwt.generateJwt({
         id: 'unknownUserId',
       });
-      const res = await request(server).get(`/get-form-data?token=${jwtToken}`);
+      const res = await request(server)
+        .get('/get-form-data')
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid.');
     });
@@ -64,7 +68,9 @@ describe('Subscription', () => {
       const jwtToken = jwt.generateJwt({
         id: user.id,
       });
-      const res = await request(server).get(`/get-form-data?token=${jwtToken}`);
+      const res = await request(server)
+        .get('/get-form-data')
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid.');
     });
@@ -73,7 +79,9 @@ describe('Subscription', () => {
       const jwtToken = jwt.generateJwt({
         id: user.id,
       });
-      const res = await request(server).get(`/get-form-data?token=${jwtToken}`);
+      const res = await request(server)
+        .get('/get-form-data')
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('Error params');
     });
@@ -83,7 +91,9 @@ describe('Subscription', () => {
         id: user.id,
       });
       const formIds = [1,2,3,4,5,6,7,8,9,10,11].join(',');
-      const res = await request(server).get(`/get-form-data?token=${jwtToken}&formIds=${formIds}`);
+      const res = await request(server)
+        .get(`/get-form-data?formIds=${formIds}`)
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('Too many forms');
     });
@@ -97,7 +107,9 @@ describe('Subscription', () => {
       const googleFormScope = nock('https://forms.googleapis.com')
         .get(`/v1/forms/${mockFormId}`)
         .reply(200, formData);
-      const res = await request(server).get(`/get-form-data?token=${jwtToken}&formIds=${formIds}`);
+      const res = await request(server)
+        .get(`/get-form-data?formIds=${formIds}`)
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).forms.length).toEqual(1);
       expect(JSON.parse(res.text).forms[0].id).toEqual(formData.id);
@@ -123,7 +135,9 @@ describe('Subscription', () => {
       const googleFormScope = nock('https://forms.googleapis.com')
         .get(`/v1/forms/${mockFormId}`)
         .reply(200, formData);
-      const res = await request(server).get(`/get-form-data?token=${jwtToken}&formIds=${formIds}`);
+      const res = await request(server)
+        .get(`/get-form-data?formIds=${formIds}`)
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).forms.length).toEqual(1);
       expect(JSON.parse(res.text).forms[0].id).toEqual(formData.id);
@@ -144,7 +158,9 @@ describe('Subscription', () => {
       const googleRefreshAuthScope = nock(googleTokenDomain)
         .post(googleTokenPath)
         .reply(401);
-      const res = await request(server).get(`/get-form-data?token=${jwtToken}&formIds=${formIds}`);
+      const res = await request(server)
+        .get(`/get-form-data?formIds=${formIds}`)
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(401);
       const newUser = await User.findByPk(user.id);
       expect(newUser.accessToken).toEqual('');
@@ -162,7 +178,9 @@ describe('Subscription', () => {
       const googleRefreshAuthScope = nock(googleTokenDomain)
         .post(googleTokenPath)
         .reply(502);
-      const res = await request(server).get(`/get-form-data?token=${jwtToken}&formIds=${formIds}`);
+      const res = await request(server)
+        .get(`/get-form-data?formIds=${formIds}`)
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(500);
       const newUser = await User.findByPk(user.id);
       expect(!!newUser.accessToken).toEqual(true);

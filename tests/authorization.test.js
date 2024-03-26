@@ -514,7 +514,9 @@ describe('Authorization', () => {
     });
 
     it('should return 403 when jwtToken is invalid', async () => {
-      const res = await request(server).get('/get-user-info?token=xxx');
+      const res = await request(server)
+        .get('/get-user-info')
+        .set('x-access-token', 'xxx');
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid.');
     });
@@ -523,7 +525,9 @@ describe('Authorization', () => {
       const jwtToken = jwt.generateJwt({
         id: 'unknownUserId',
       });
-      const res = await request(server).get(`/get-user-info?token=${jwtToken}`);
+      const res = await request(server)
+        .get('/get-user-info')
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(400);
       expect(res.text).toContain('Invalid rcWebhookUri.');
     });
@@ -532,7 +536,9 @@ describe('Authorization', () => {
       const jwtToken = jwt.generateJwt({
         id: 'unknownUserId',
       });
-      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockDomain}/`);
+      const res = await request(server)
+        .get(`/get-user-info?rcWebhookUri=${mockDomain}/`)
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(400);
       expect(res.text).toContain('Invalid rcWebhookUri.');
     });
@@ -541,7 +547,9 @@ describe('Authorization', () => {
       const jwtToken = jwt.generateJwt({
         id: 'unknownUserId',
       });
-      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=test.com`);
+      const res = await request(server)
+        .get(`/get-user-info?rcWebhookUri=test.com`)
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(400);
       expect(res.text).toContain('Invalid rcWebhookUri.');
     });
@@ -550,7 +558,9 @@ describe('Authorization', () => {
       const jwtToken = jwt.generateJwt({
         id: 'unknownUserId',
       });
-      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockRCWebhookUri}`);
+      const res = await request(server)
+        .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid.');
     });
@@ -561,7 +571,9 @@ describe('Authorization', () => {
       const jwtToken = jwt.generateJwt({
         id: user.id,
       });
-      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockRCWebhookUri}`);
+      const res = await request(server)
+        .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid.');
     });
@@ -570,7 +582,9 @@ describe('Authorization', () => {
       const jwtToken = jwt.generateJwt({
         id: user.id,
       });
-      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockRCWebhookUri}`);
+      const res = await request(server)
+        .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).user.name).toEqual('test user');
       expect(JSON.parse(res.text).formIds.length).toEqual(0);
@@ -598,7 +612,9 @@ describe('Authorization', () => {
       const jwtToken = jwt.generateJwt({
         id: user.id,
       });
-      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockRCWebhookUri}`);
+      const res = await request(server)
+        .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).user.name).toEqual('test user');
       expect(JSON.parse(res.text).formIds.length).toEqual(1);
@@ -619,7 +635,9 @@ describe('Authorization', () => {
           scope: '',
           token_type: 'Bearer',
         });
-      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockRCWebhookUri}`);
+      const res = await request(server)
+        .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).user.name).toEqual('test user');
       expect(JSON.parse(res.text).formIds.length).toEqual(0);
@@ -637,7 +655,9 @@ describe('Authorization', () => {
       const googleRefreshAuthScope = nock(googleTokenDomain)
         .post(googleTokenPath)
         .reply(401);
-      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockRCWebhookUri}`);
+      const res = await request(server)
+        .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(401);
       const newUser = await User.findByPk(user.id);
       expect(newUser.accessToken).toEqual('');
@@ -653,7 +673,9 @@ describe('Authorization', () => {
       const googleRefreshAuthScope = nock(googleTokenDomain)
         .post(googleTokenPath)
         .reply(502);
-      const res = await request(server).get(`/get-user-info?token=${jwtToken}&rcWebhookUri=${mockRCWebhookUri}`);
+      const res = await request(server)
+        .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('x-access-token', jwtToken);
       expect(res.status).toEqual(500);
       const newUser = await User.findByPk(user.id);
       expect(!!newUser.accessToken).toEqual(true);
