@@ -1,36 +1,43 @@
 const path = require('path');
+const express = require('express');
+const morgan = require('morgan');
+const bodyParser = require('body-parser');
 const authorizationRoute = require('./routes/authorization');
 const subscriptionRoute = require('./routes/subscription');
 const notificationRoute = require('./routes/notification');
 const viewRoute = require('./routes/view');
 const constants = require('./lib/constants');
 
-// extends or override express app as you need
-exports.appExtend = (app) => {
-  app.set('views', path.resolve(__dirname, './views'));
-  app.set('view engine', 'pug');
+const app = express()
+app.use(morgan('tiny'))
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
 
-  // setup client
-  app.get(constants.route.forClient.CLIENT_SETUP, viewRoute.setup);
-  // authorization
-  app.get(constants.route.forClient.OPEN_AUTH_PAGE, authorizationRoute.openAuthPage);
-  app.get(constants.route.forThirdParty.AUTH_CALLBACK, authorizationRoute.oauthCallback);
-  app.get(constants.route.forClient.GET_USER_INFO, authorizationRoute.getUserInfo);
-  app.post(constants.route.forClient.GENERATE_TOKEN, authorizationRoute.generateToken);
-  // revoke
-  app.post(constants.route.forClient.REVOKE_TOKEN, authorizationRoute.revokeToken);
-  // configure
-  app.post(constants.route.forClient.SUBSCRIBE, subscriptionRoute.subscribe);
-  app.delete(constants.route.forClient.SUBSCRIBE, subscriptionRoute.deleteSubscription);
-  app.get(constants.route.forClient.GET_FORM_DATA, subscriptionRoute.getFormData);
-  // notification
-  app.post(constants.route.forThirdParty.NOTIFICATION, notificationRoute.notification);
-  // Home page
-  app.get('/home', viewRoute.home);
-  if (process.env.GOOGLE_SITE_VERIFICATION_TOKEN) {
-    app.get(`/${process.env.GOOGLE_SITE_VERIFICATION_TOKEN}.html`, (req, res) => {
-      res.send(`google-site-verification: ${process.env.GOOGLE_SITE_VERIFICATION_TOKEN}.html`);
-    });
-  }
-  app.get('/', viewRoute.home);
+app.set('views', path.resolve(__dirname, './views'));
+app.set('view engine', 'pug');
+
+// setup client
+app.get(constants.route.forClient.CLIENT_SETUP, viewRoute.setup);
+// authorization
+app.get(constants.route.forClient.OPEN_AUTH_PAGE, authorizationRoute.openAuthPage);
+app.get(constants.route.forThirdParty.AUTH_CALLBACK, authorizationRoute.oauthCallback);
+app.get(constants.route.forClient.GET_USER_INFO, authorizationRoute.getUserInfo);
+app.post(constants.route.forClient.GENERATE_TOKEN, authorizationRoute.generateToken);
+// revoke
+app.post(constants.route.forClient.REVOKE_TOKEN, authorizationRoute.revokeToken);
+// configure
+app.post(constants.route.forClient.SUBSCRIBE, subscriptionRoute.subscribe);
+app.delete(constants.route.forClient.SUBSCRIBE, subscriptionRoute.deleteSubscription);
+app.get(constants.route.forClient.GET_FORM_DATA, subscriptionRoute.getFormData);
+// notification
+app.post(constants.route.forThirdParty.NOTIFICATION, notificationRoute.notification);
+// Home page
+app.get('/home', viewRoute.home);
+if (process.env.GOOGLE_SITE_VERIFICATION_TOKEN) {
+  app.get(`/${process.env.GOOGLE_SITE_VERIFICATION_TOKEN}.html`, (req, res) => {
+    res.send(`google-site-verification: ${process.env.GOOGLE_SITE_VERIFICATION_TOKEN}.html`);
+  });
 }
+app.get('/', viewRoute.home);
+
+exports.app = app;
