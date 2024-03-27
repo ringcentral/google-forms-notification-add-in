@@ -116,6 +116,22 @@ describe('Subscription', () => {
       googleFormScope.done();
     });
 
+    it('should return 404 when form response 404', async () => {
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const mockFormId = 'mockFormId';
+      const formIds = [mockFormId].join(',');
+      const googleFormScope = nock('https://forms.googleapis.com')
+        .get(`/v1/forms/${mockFormId}`)
+        .reply(404, 'Not found');
+      const res = await request(server)
+        .get(`/get-form-data?formIds=${formIds}`)
+        .set('x-access-token', jwtToken);
+      expect(res.status).toEqual(404);
+      googleFormScope.done();
+    });
+
     it('should refresh token and return form data successfully', async () => {
       user.tokenExpiredAt = new Date(Date.now() - 3600 * 1000);
       await user.save();
