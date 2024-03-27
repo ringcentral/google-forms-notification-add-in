@@ -39,7 +39,7 @@ async function getUserInfo(req, res) {
       res.send('Unauthorized.');
       return;
     }
-    console.error(e);
+    console.error(e && e.message);
     res.status(500);
     res.send('Internal error');
     return;
@@ -95,7 +95,7 @@ async function generateToken(req, res) {
       res.send('invalid scope');
       return;
     }
-    console.error(e);
+    console.error(e && e.message);
     res.status(500);
     res.send('internal error');
   }
@@ -149,7 +149,7 @@ async function revokeToken(req, res) {
       authorized: false,
     });
   } catch (e) {
-    console.error(e);
+    console.error(e && e.message);
     res.status(500);
     res.send('internal error');
   }

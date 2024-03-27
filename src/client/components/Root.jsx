@@ -142,7 +142,7 @@ export function App({ integrationHelper, client, analytics }) {
           setError('Authorization required.');
           setAuthorized(false);
         } else {
-          setError('Fetch data error please retry later');
+          setError(e.message || 'Fetch data error please retry later');
         }
       }
       setLoading(false);
@@ -334,7 +334,7 @@ export function App({ integrationHelper, client, analytics }) {
                   setError('Authorization required.');
                   setAuthorized(false);
                 } else {
-                  setError('Fetch data error please retry later');
+                  setError(e.message || 'Fetch data error please retry later');
                 }
               }
               analytics.track('Save Google form');
