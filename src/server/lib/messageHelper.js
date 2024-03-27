@@ -29,9 +29,7 @@ async function sendAdaptiveCardMessage(rcWebhook, card) {
     }
   });
   const analytics = new Analytics({ mixpanelKey: process.env.MIXPANEL_KEY });
-  await analytics.track('cardPosted', {
-    cardId: card.id,
-  });
+  await analytics.track('cardPosted', {});
   return response;
 }
 
