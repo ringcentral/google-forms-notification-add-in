@@ -48,7 +48,7 @@ async function onUnauthorize(user) {
       await Subscription.destroy({ where: { id: subscription.id } });
     } catch (e) {
       console.error('Failed to delete watch: ', subscription.id);
-      console.error(e);
+      console.error(e && e.message);
     }
   }));
   await googleClient.revokeToken(user.refreshToken || user.accessToken);

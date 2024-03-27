@@ -53,7 +53,7 @@ async function onSubscribe(user, rcWebhookId, rcWebhookUri, formIds) {
       });
     } catch (e) {
       console.error(`Subscription error for user ${user.id} and form ${formId}`);
-      console.error(e);
+      console.error(e && e.message);
       if (e.response) {
         console.error(e.response.status);
         console.error(e.response.data);

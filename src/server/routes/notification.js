@@ -23,7 +23,7 @@ async function notification(req, res) {
       result: 'ok',
     });
   } catch (e) {
-    console.error(e);
+    console.error(e && e.message);
     res.status(200);
     res.json({
       result: 'error',

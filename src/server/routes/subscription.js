@@ -38,18 +38,24 @@ async function getFormData(req, res) {
       forms,
     });
   } catch (e) {
-    console.error(e);
-    if (e.response && e.response.status === 401) {
-      if (user) {
-        user.accessToken = '';
-        user.refreshToken = '';
-        await user.save();
+    console.error(e && e.message);
+    if (e.response) {
+      if (e.response.status === 401) {
+        if (user) {
+          user.accessToken = '';
+          user.refreshToken = '';
+          await user.save();
+        }
+        res.status(401);
+        res.send('Unauthorized.');
+        return;
       }
-      res.status(401);
-      res.send('Unauthorized.');
-      return;
+      if (e.response.status === 404) {
+        res.status(404);
+        res.send('Not found');
+        return;
+      }
     }
-    console.error(e);
     res.status(500);
     res.send('Internal error');
   }
@@ -120,7 +126,7 @@ async function subscribe(req, res) {
       res.send('Unauthorized');
       return;
     }
-    console.error(e);
+    console.error(e && e.message);
     res.status(500);
     res.send('Internal server error');
     return;
@@ -184,7 +190,7 @@ async function deleteSubscription(req, res) {
       res.send('Unauthorized');
       return;
     }
-    console.error(e);
+    console.error(e && e.message);
     res.status(500);
     res.send('Internal server error');
   }

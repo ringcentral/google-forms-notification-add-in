@@ -52,7 +52,7 @@ async function onReceiveNotification(subscription, messageTime) {
           }
         } catch (e) {
           console.error('Error sending message to RC Webhook:');
-          console.error(e);
+          console.error(e && e.message);
         }
       }));
     } else if (subscription.rcWebhookUri) {

@@ -76,8 +76,11 @@ export class Client {
       this.cleanToken();
       throw new Error('Unauthorized');
     }
+    if (response.status === 404) {
+      throw new Error('Google form not found');
+    }
     if (response.status !== 200) {
-      throw new Error('Fetch data error please retry later')
+      throw new Error('Fetch data error please retry later');
     }
     const data = await response.json();
     return data.forms;
