@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { icon } = require('./constants');
+const { Analytics } = require('./analytics');
 
 // async function sendTextMessage(rcWebhook, message) {
 //   await axios.post(rcWebhook, {
@@ -27,6 +28,8 @@ async function sendAdaptiveCardMessage(rcWebhook, card) {
       'Content-Type': 'application/json'
     }
   });
+  const analytics = new Analytics({ mixpanelKey: process.env.MIXPANEL_KEY });
+  await analytics.track('cardPosted', {});
   return response;
 }
 

@@ -45,7 +45,7 @@ async function refreshSubscription() {
       }
     } catch (e) {
       console.error('refreshing error subscription: ', subscription.id);
-      console.error(e);
+      console.error(e && e.message);
     }
   }
 }
