@@ -7,7 +7,14 @@ html
     title Google Form Add-in OAuth Callback
     link(href='//developer.ringcentral.com/assets/images/favicon.ico?v=20181214-0738', type='image/vnd.microsoft.icon', rel='shortcut icon')
   body
-    #container Loading
+    #container
+      div Loading...
+      br
+      br
+      div
+        span If keep loading, please use RingCentral web app &nbsp;
+        a(href="https://app.ringcentral.com") https://app.ringcentral.com
+        span &nbsp; to setup this add-in. RingCentral desktop app may have Google authorization issue in version 24.2.x.
     script.
       window.opener.postMessage({
         authCallback: window.location.href,
