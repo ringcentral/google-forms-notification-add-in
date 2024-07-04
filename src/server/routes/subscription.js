@@ -4,6 +4,7 @@ const { onSubscribe, onDeleteSubscription } = require('../handlers/subscriptionH
 const { GoogleClient } = require('../lib/GoogleClient');
 const { checkAndRefreshAccessToken } = require('../lib/oauth');
 const { getRCWebhookId } = require('../lib/getRCWebhookId');
+const { errorLogger } = require('../lib/logger');
 
 async function getFormData(req, res) {
   const userId = req.currentUserId;
@@ -38,7 +39,7 @@ async function getFormData(req, res) {
       forms,
     });
   } catch (e) {
-    console.error(e && e.message);
+    errorLogger(e && e.message);
     if (e.response) {
       if (e.response.status === 401) {
         if (user) {
@@ -126,7 +127,7 @@ async function subscribe(req, res) {
       res.send('Unauthorized');
       return;
     }
-    console.error(e && e.message);
+    errorLogger(e && e.message);
     res.status(500);
     res.send('Internal server error');
     return;
@@ -190,7 +191,7 @@ async function deleteSubscription(req, res) {
       res.send('Unauthorized');
       return;
     }
-    console.error(e && e.message);
+    errorLogger(e && e.message);
     res.status(500);
     res.send('Internal server error');
   }

@@ -1,4 +1,5 @@
 const Mixpanel = require('mixpanel');
+const { errorLogger } = require('./logger');
 
 class Analytics {
   constructor({
@@ -33,7 +34,7 @@ class Analytics {
     try {
       await this._track(event, properties);
     } catch (e) {
-      console.error(e && e.message);
+      errorLogger(e);
     }
   }
 }

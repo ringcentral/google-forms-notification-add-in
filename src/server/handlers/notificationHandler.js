@@ -3,6 +3,7 @@ const { sendAdaptiveCardMessage } = require('../lib/messageHelper');
 const { checkAndRefreshAccessToken } = require('../lib/oauth');
 const { formatGoogleFormResponseIntoCard } = require('../lib/formatGoogleFormResponse');
 const { GoogleClient } = require('../lib/GoogleClient');
+const { errorLogger } = require('../lib/logger');
 
 async function onReceiveNotification(subscription, messageTime) {
   const userId = subscription.userId;
@@ -52,7 +53,7 @@ async function onReceiveNotification(subscription, messageTime) {
           }
         } catch (e) {
           console.error('Error sending message to RC Webhook:');
-          console.error(e && e.message);
+          errorLogger(e);
         }
       }));
     } else if (subscription.rcWebhookUri) {

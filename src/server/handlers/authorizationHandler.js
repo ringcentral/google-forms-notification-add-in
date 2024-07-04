@@ -1,6 +1,7 @@
 const { User } = require('../models/userModel');
 const { Subscription } = require('../models/subscriptionModel');
 const { GoogleClient } = require('../lib/GoogleClient');
+const { errorLogger } = require('../lib/logger');
 
 async function onAuthorize(accessToken, refreshToken, expires) {
   const googleClient = new GoogleClient({ token: accessToken });
@@ -48,7 +49,7 @@ async function onUnauthorize(user) {
       await Subscription.destroy({ where: { id: subscription.id } });
     } catch (e) {
       console.error('Failed to delete watch: ', subscription.id);
-      console.error(e && e.message);
+      errorLogger(e);
     }
   }));
   await googleClient.revokeToken(user.refreshToken || user.accessToken);

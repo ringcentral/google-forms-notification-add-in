@@ -1,5 +1,6 @@
 const { Subscription } = require('../models/subscriptionModel');
 const { onReceiveNotification } = require('../handlers/notificationHandler');
+const { errorLogger } = require('../lib/logger');
 
 async function notification(req, res) {
   // console.log(JSON.stringify(req.body, null, 2));
@@ -23,7 +24,7 @@ async function notification(req, res) {
       result: 'ok',
     });
   } catch (e) {
-    console.error(e && e.message);
+    errorLogger(e);
     res.status(200);
     res.json({
       result: 'error',
