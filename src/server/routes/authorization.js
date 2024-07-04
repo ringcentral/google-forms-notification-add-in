@@ -4,6 +4,7 @@ const { onAuthorize, onUnauthorize } = require('../handlers/authorizationHandler
 const { checkAndRefreshAccessToken } = require('../lib/oauth');
 const { getRCWebhookId } = require('../lib/getRCWebhookId');
 const { GoogleClient } = require('../lib/GoogleClient');
+const { errorLogger } = require('../lib/logger');
 
 async function openAuthPage(req, res) {
   const url = GoogleClient.authorizationUrl();
@@ -39,7 +40,7 @@ async function getUserInfo(req, res) {
       res.send('Unauthorized.');
       return;
     }
-    console.error(e && e.message);
+    errorLogger(e);
     res.status(500);
     res.send('Internal error');
     return;
@@ -95,7 +96,7 @@ async function generateToken(req, res) {
       res.send('invalid scope');
       return;
     }
-    console.error(e && e.message);
+    errorLogger(e);
     res.status(500);
     res.send('internal error');
   }
@@ -149,7 +150,7 @@ async function revokeToken(req, res) {
       authorized: false,
     });
   } catch (e) {
-    console.error(e && e.message);
+    errorLogger(e);
     res.status(500);
     res.send('internal error');
   }

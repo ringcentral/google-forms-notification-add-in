@@ -1,5 +1,6 @@
 const { GoogleClient } = require('../lib/GoogleClient');
 const { Subscription } = require('../models/subscriptionModel');
+const { errorLogger } = require('../lib/logger');
 
 async function onSubscribe(user, rcWebhookId, rcWebhookUri, formIds) {
   let userSubscriptions = [...user.subscriptions];
@@ -52,12 +53,8 @@ async function onSubscribe(user, rcWebhookId, rcWebhookUri, formIds) {
         rcWebhookId,
       });
     } catch (e) {
-      console.error(`Subscription error for user ${user.id} and form ${formId}`);
-      console.error(e && e.message);
-      if (e.response) {
-        console.error(e.response.status);
-        console.error(e.response.data);
-      }
+      console.error('Subscription error');
+      errorLogger(e && e.message);
     }
   }));
   user.subscriptions = userSubscriptions;

@@ -10,7 +10,33 @@ const constants = require('./lib/constants');
 const { checkAuth } = require('./middlewares/auth');
 
 const app = express()
-app.use(morgan('tiny'))
+app.use(morgan(function (tokens, req, res) {
+  let url = tokens.url(req, res);
+  const rcWebhookUri = req.query.rcWebhookUri || req.query.webhook;
+  if (rcWebhookUri) {
+    const webhookId = rcWebhookUri.split('/').pop();
+    if (webhookId) {
+      url = url.replace(webhookId, '[MASK]');
+    }
+  }
+  const code = req.query.code;
+  if (code) {
+    url = url.replace(code, '[MASK]');
+  }
+  if (url.indexOf('/get-form-data') === 0) {
+    const formIds = req.query.formIds;
+    if (formIds) {
+      url = url.replace(formIds, '[MASK]');
+    }
+  }
+  return [
+    tokens.method(req, res),
+    url,
+    tokens.status(req, res),
+    tokens.res(req, res, 'content-length'), '-',
+    tokens['response-time'](req, res), 'ms'
+  ].join(' ');
+}));
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
