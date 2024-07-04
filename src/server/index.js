@@ -19,6 +19,10 @@ app.use(morgan(function (tokens, req, res) {
       url = url.replace(webhookId, '[MASK]');
     }
   }
+  const code = req.query.code;
+  if (code) {
+    url = url.replace(code, '[MASK]');
+  }
   if (url.indexOf('/get-form-data') === 0) {
     const formIds = req.query.formIds;
     if (formIds) {
