@@ -15,6 +15,7 @@ describe('Setup', () => {
     expect(res.status).toEqual(200);
     expect(res.text).toContain('window.clientConfig');
     expect(res.text).toContain(`${process.env.ASSETS_PATH}/app.js`);
+    expect(res.headers['content-security-policy']).toContain(`frame-ancestors 'self'`);
   });
 
   it('should get 200 when visit home page', async () => {

@@ -38,7 +38,7 @@ describe('Subscription', () => {
 
   describe('get form data', () => {
     it('should return 403 without token', async () => {
-      const res = await request(server).get('/get-form-data');
+      const res = await request(server).get('/get-form-data').set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('Token required.');
     });
@@ -46,6 +46,7 @@ describe('Subscription', () => {
     it('should return 401 with invalid token', async () => {
       const res = await request(server)
         .get('/get-form-data')
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', 'xxx');
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid.');
@@ -57,6 +58,7 @@ describe('Subscription', () => {
       });
       const res = await request(server)
         .get('/get-form-data')
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid.');
@@ -70,6 +72,7 @@ describe('Subscription', () => {
       });
       const res = await request(server)
         .get('/get-form-data')
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid.');
@@ -81,6 +84,7 @@ describe('Subscription', () => {
       });
       const res = await request(server)
         .get('/get-form-data')
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('Error params');
@@ -93,6 +97,7 @@ describe('Subscription', () => {
       const formIds = [1,2,3,4,5,6,7,8,9,10,11].join(',');
       const res = await request(server)
         .get(`/get-form-data?formIds=${formIds}`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('Too many forms');
@@ -109,6 +114,7 @@ describe('Subscription', () => {
         .reply(200, formData);
       const res = await request(server)
         .get(`/get-form-data?formIds=${formIds}`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).forms.length).toEqual(1);
@@ -127,6 +133,7 @@ describe('Subscription', () => {
         .reply(404, 'Not found');
       const res = await request(server)
         .get(`/get-form-data?formIds=${formIds}`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(404);
       googleFormScope.done();
@@ -153,6 +160,7 @@ describe('Subscription', () => {
         .reply(200, formData);
       const res = await request(server)
         .get(`/get-form-data?formIds=${formIds}`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).forms.length).toEqual(1);
@@ -176,6 +184,7 @@ describe('Subscription', () => {
         .reply(401);
       const res = await request(server)
         .get(`/get-form-data?formIds=${formIds}`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(401);
       const newUser = await User.findByPk(user.id);
@@ -196,6 +205,7 @@ describe('Subscription', () => {
         .reply(502);
       const res = await request(server)
         .get(`/get-form-data?formIds=${formIds}`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(500);
       const newUser = await User.findByPk(user.id);
@@ -206,7 +216,7 @@ describe('Subscription', () => {
 
   describe('subscribe', () => {
     it('should return 403 without token', async () => {
-      const res = await request(server).post('/subscribe');
+      const res = await request(server).post('/subscribe').set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('Params invalid');
     });
@@ -214,7 +224,7 @@ describe('Subscription', () => {
     it('should return 401 with invalid token', async () => {
       const res = await request(server).post('/subscribe').send({
         token: 'invalidToken',
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid');
     });
@@ -225,7 +235,7 @@ describe('Subscription', () => {
       });
       const res = await request(server).post('/subscribe').send({
         token: jwtToken,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(400);
       expect(res.text).toContain('Invalid rcWebhookUri');
     });
@@ -237,7 +247,7 @@ describe('Subscription', () => {
       const res = await request(server).post('/subscribe').send({
         token: jwtToken,
         rcWebhookUri: `${mockDomain}/`,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(400);
       expect(res.text).toContain('Invalid rcWebhookUri');
     });
@@ -249,7 +259,7 @@ describe('Subscription', () => {
       const res = await request(server).post('/subscribe').send({
         token: jwtToken,
         rcWebhookUri: 'test.com',
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(400);
       expect(res.text).toContain('Invalid rcWebhookUri');
     });
@@ -261,7 +271,7 @@ describe('Subscription', () => {
       const res = await request(server).post('/subscribe').send({
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(400);
       expect(res.text).toContain('Invalid formIds');
     });
@@ -274,7 +284,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formIds: '',
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(400);
       expect(res.text).toContain('Invalid formIds');
     });
@@ -287,7 +297,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formIds: [1,2,3,4,5,6,7,8,9,10,11].join(','),
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(400);
       expect(res.text).toContain('Max 10 forms');
     });
@@ -300,7 +310,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formIds: '1234',
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Authorization required');
     });
@@ -315,7 +325,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formIds: '1234',
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Authorization required');
     });
@@ -337,7 +347,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formIds: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).result).toContain('ok');
       const subscription = await Subscription.findByPk(mockWatchId);
@@ -384,7 +394,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formIds: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).result).toContain('ok');
       const subscription = await Subscription.findByPk(mockWatchId);
@@ -416,7 +426,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formIds: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(401);
       const newUser = await User.findByPk(user.id);
       expect(newUser.accessToken).toEqual('');
@@ -437,7 +447,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formIds: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(500);
       googleRefreshAuthScope.done();
     });
@@ -478,7 +488,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formIds: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).result).toContain('ok');
       const subscription = await Subscription.findByPk(mockWatchId);
@@ -530,7 +540,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formIds: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).result).toContain('ok');
       const subscription = await Subscription.findByPk(mockWatchId);
@@ -583,7 +593,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formIds: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).result).toContain('ok');
       const subscription = await Subscription.findByPk(mockWatchId);
@@ -636,7 +646,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formIds: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).result).toContain('ok');
       const subscription = await Subscription.findByPk(mockWatchId);
@@ -688,7 +698,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formIds: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).result).toContain('ok');
       const subscription = await Subscription.findByPk(mockWatchId);
@@ -732,7 +742,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formIds: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).result).toContain('ok');
       const subscription = await Subscription.findByPk(mockWatchId);
@@ -751,7 +761,7 @@ describe('Subscription', () => {
 
   describe('delete subscription', () => {
     it('should return 403 without token', async () => {
-      const res = await request(server).delete('/subscribe');
+      const res = await request(server).delete('/subscribe').set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('Params invalid');
     });
@@ -759,7 +769,7 @@ describe('Subscription', () => {
     it('should return 401 with invalid token', async () => {
       const res = await request(server).delete('/subscribe').send({
         token: 'invalidToken',
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid');
     });
@@ -770,7 +780,7 @@ describe('Subscription', () => {
       });
       const res = await request(server).delete('/subscribe').send({
         token: jwtToken,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(400);
       expect(res.text).toContain('Invalid rcWebhookUri');
     });
@@ -782,7 +792,7 @@ describe('Subscription', () => {
       const res = await request(server).delete('/subscribe').send({
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(400);
       expect(res.text).toContain('Invalid formId');
     });
@@ -795,7 +805,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formId: '1234',
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Authorization required');
     });
@@ -810,7 +820,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formId: '1234',
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Authorization required');
     });
@@ -850,7 +860,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formId: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).result).toEqual('ok');
       const newUser = await User.findByPk(user.id);
@@ -879,7 +889,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formId: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).result).toEqual('ok');
       const newUser = await User.findByPk(user.id);
@@ -915,7 +925,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formId: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).result).toEqual('ok');
       const newUser = await User.findByPk(user.id);
@@ -957,7 +967,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formId: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).result).toEqual('ok');
       const newUser = await User.findByPk(user.id);
@@ -1002,7 +1012,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formId: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).result).toEqual('ok');
       const newUser = await User.findByPk(user.id);
@@ -1054,7 +1064,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formId: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).result).toEqual('ok');
       const newUser = await User.findByPk(user.id);
@@ -1097,7 +1107,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formId: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(401);
       const newUser = await User.findByPk(user.id);
       expect(newUser.subscriptions.length).toEqual(1);
@@ -1143,7 +1153,7 @@ describe('Subscription', () => {
         token: jwtToken,
         rcWebhookUri: mockRCWebhookUri,
         formId: mockFormId,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(500);
       const newUser = await User.findByPk(user.id);
       expect(newUser.subscriptions.length).toEqual(1);
