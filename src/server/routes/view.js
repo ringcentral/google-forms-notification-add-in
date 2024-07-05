@@ -5,6 +5,7 @@ const constants = require('../lib/constants');
 
 async function setup(req, res) {
   const rcWebhookUri = req.query.webhook;
+  res.set('Content-Security-Policy', `frame-ancestors 'self' ${constants.IFRAME_HOST_DOMAINS};`);
   res.render('setup', {
     assetsPath: process.env.ASSETS_PATH,
     data: {

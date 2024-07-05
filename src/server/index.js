@@ -8,6 +8,7 @@ const notificationRoute = require('./routes/notification');
 const viewRoute = require('./routes/view');
 const constants = require('./lib/constants');
 const { checkAuth } = require('./middlewares/auth');
+const { refererChecker } = require('./lib/refererChecker');
 
 const app = express()
 app.use(morgan(function (tokens, req, res) {
@@ -48,14 +49,14 @@ app.get(constants.route.forClient.CLIENT_SETUP, viewRoute.setup);
 // authorization
 app.get(constants.route.forClient.OPEN_AUTH_PAGE, authorizationRoute.openAuthPage);
 app.get(constants.route.forThirdParty.AUTH_CALLBACK, authorizationRoute.oauthCallback);
-app.get(constants.route.forClient.GET_USER_INFO, checkAuth, authorizationRoute.getUserInfo);
-app.post(constants.route.forClient.GENERATE_TOKEN, authorizationRoute.generateToken);
+app.get(constants.route.forClient.GET_USER_INFO, refererChecker, checkAuth, authorizationRoute.getUserInfo);
+app.post(constants.route.forClient.GENERATE_TOKEN, refererChecker, authorizationRoute.generateToken);
 // revoke
-app.post(constants.route.forClient.REVOKE_TOKEN, authorizationRoute.revokeToken);
+app.post(constants.route.forClient.REVOKE_TOKEN, refererChecker, authorizationRoute.revokeToken);
 // configure
-app.post(constants.route.forClient.SUBSCRIBE, subscriptionRoute.subscribe);
-app.delete(constants.route.forClient.SUBSCRIBE, subscriptionRoute.deleteSubscription);
-app.get(constants.route.forClient.GET_FORM_DATA, checkAuth, subscriptionRoute.getFormData);
+app.post(constants.route.forClient.SUBSCRIBE, refererChecker, subscriptionRoute.subscribe);
+app.delete(constants.route.forClient.SUBSCRIBE, refererChecker, subscriptionRoute.deleteSubscription);
+app.get(constants.route.forClient.GET_FORM_DATA, refererChecker, checkAuth, subscriptionRoute.getFormData);
 // notification
 app.post(constants.route.forThirdParty.NOTIFICATION, notificationRoute.notification);
 // Home page
