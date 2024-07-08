@@ -38,8 +38,17 @@ describe('Authorization', () => {
       await User.destroy({ where: { id: userId } });
     })
 
+    it('should send no referer error', async () => {
+      const res = await request(server)
+        .post('/generate-token');
+      expect(res.status).toEqual(403);
+      expect(res.text).toContain('No Referer');
+    });
+
     it('should send no callbackUri error', async () => {
-      const res = await request(server).post('/generate-token');
+      const res = await request(server)
+        .post('/generate-token')
+        .set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('params error');
     });
@@ -47,7 +56,7 @@ describe('Authorization', () => {
     it('should send auth error', async () => {
       const res = await request(server).post('/generate-token').send({
         callbackUri: 'http://test.com/oauth-callback?error=user_deny',
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('user_deny');
     });
@@ -55,7 +64,7 @@ describe('Authorization', () => {
     it('should send no code error', async () => {
       const res = await request(server).post('/generate-token').send({
         callbackUri: 'http://test.com/oauth-callback',
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('code is required');
     });
@@ -63,7 +72,7 @@ describe('Authorization', () => {
     it('should send invalid scope error', async () => {
       const res = await request(server).post('/generate-token').send({
         callbackUri: 'http://test.com/oauth-callback?code=xxx',
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('invalid scope');
     });
@@ -71,7 +80,7 @@ describe('Authorization', () => {
     it('should send invalid scope error without body readonly', async () => {
       const res = await request(server).post('/generate-token').send({
         callbackUri: 'http://test.com/oauth-callback?code=xxx&scope=profile%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/forms.responses.readonly',
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('invalid scope');
     });
@@ -79,7 +88,7 @@ describe('Authorization', () => {
     it('should send invalid scope error without responses readonly', async () => {
       const res = await request(server).post('/generate-token').send({
         callbackUri: 'http://test.com/oauth-callback?code=xxx&scope=profile%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/forms.body.readonly',
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('invalid scope');
     });
@@ -90,7 +99,7 @@ describe('Authorization', () => {
         .reply(200, {});
       const res = await request(server).post('/generate-token').send({
         callbackUri: `http://test.com/oauth-callback?code=test_code&scope=${scope}`,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('auth error');
       googleAuthScope.done();
@@ -102,7 +111,7 @@ describe('Authorization', () => {
         .reply(502);
       const res = await request(server).post('/generate-token').send({
         callbackUri: `http://test.com/oauth-callback?code=test_code&scope=${scope}`,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(500);
       expect(res.text).toContain('internal error');
       googleAuthScope.done();
@@ -125,7 +134,7 @@ describe('Authorization', () => {
         });
       const res = await request(server).post('/generate-token').send({
         callbackUri: `http://test.com/oauth-callback?code=test_code&scope=${scope}`,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).authorize).toEqual(true);
       const jwtToken = JSON.parse(res.text).token;
@@ -154,7 +163,7 @@ describe('Authorization', () => {
         });
       const res = await request(server).post('/generate-token').send({
         callbackUri: `http://test.com/oauth-callback?code=test_code&scope=${scope}`,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).authorize).toEqual(true);
       const jwtToken = JSON.parse(res.text).token;
@@ -184,7 +193,7 @@ describe('Authorization', () => {
         });
       const res = await request(server).post('/generate-token').send({
         callbackUri: `http://test.com/oauth-callback?code=test_code&scope=${scope}`,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).authorize).toEqual(true);
       const jwtToken = JSON.parse(res.text).token;
@@ -215,7 +224,7 @@ describe('Authorization', () => {
     });
 
     it('should return 403 without jwtToken when revoke', async () => {
-      const res = await request(server).post('/revoke-token');
+      const res = await request(server).post('/revoke-token').set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('Error params');
     });
@@ -223,7 +232,7 @@ describe('Authorization', () => {
     it('should return 403 when jwtToken is invalid', async () => {
       const res = await request(server).post('/revoke-token').send({
         token: 'xxx',
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid.');
     });
@@ -234,7 +243,7 @@ describe('Authorization', () => {
       });
       const res = await request(server).post('/revoke-token').send({
         token: jwtToken,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).authorized).toEqual(false);
     });
@@ -247,7 +256,7 @@ describe('Authorization', () => {
       });
       const res = await request(server).post('/revoke-token').send({
         token: jwtToken,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).authorized).toEqual(false);
     });
@@ -261,7 +270,7 @@ describe('Authorization', () => {
         .reply(200);
       const res = await request(server).post('/revoke-token').send({
         token: jwtToken,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).authorized).toEqual(false);
       const newUser = await User.findByPk(user.id);
@@ -279,7 +288,7 @@ describe('Authorization', () => {
         .reply(502);
       const res = await request(server).post('/revoke-token').send({
         token: jwtToken,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(500);
       googleAuthScope.done();
     });
@@ -303,7 +312,7 @@ describe('Authorization', () => {
         });
       const res = await request(server).post('/revoke-token').send({
         token: jwtToken,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).authorized).toEqual(false);
       const newUser = await User.findByPk(user.id);
@@ -324,7 +333,7 @@ describe('Authorization', () => {
         .reply(401);
       const res = await request(server).post('/revoke-token').send({
         token: jwtToken,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).authorized).toEqual(false);
       const newUser = await User.findByPk(user.id);
@@ -344,7 +353,7 @@ describe('Authorization', () => {
         .reply(502);
       const res = await request(server).post('/revoke-token').send({
         token: jwtToken,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(500);
       googleRefreshAuthScope.done();
     });
@@ -379,7 +388,7 @@ describe('Authorization', () => {
         .reply(200);
       const res = await request(server).post('/revoke-token').send({
         token: jwtToken,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).authorized).toEqual(false);
       const newUser = await User.findByPk(user.id);
@@ -430,7 +439,7 @@ describe('Authorization', () => {
         .reply(200);
       const res = await request(server).post('/revoke-token').send({
         token: jwtToken,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).authorized).toEqual(false);
       const newUser = await User.findByPk(user.id);
@@ -473,7 +482,7 @@ describe('Authorization', () => {
         .reply(502);
       const res = await request(server).post('/revoke-token').send({
         token: jwtToken,
-      });
+      }).set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).authorized).toEqual(false);
       const newUser = await User.findByPk(user.id);
@@ -508,7 +517,7 @@ describe('Authorization', () => {
     });
 
     it('should response 403 without jwtToken', async () => {
-      const res = await request(server).get('/get-user-info');
+      const res = await request(server).get('/get-user-info').set('Referer', process.env.APP_SERVER);
       expect(res.status).toEqual(403);
       expect(res.text).toContain('Token required.');
     });
@@ -516,6 +525,7 @@ describe('Authorization', () => {
     it('should return 403 when jwtToken is invalid', async () => {
       const res = await request(server)
         .get('/get-user-info')
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', 'xxx');
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid.');
@@ -527,6 +537,7 @@ describe('Authorization', () => {
       });
       const res = await request(server)
         .get('/get-user-info')
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(400);
       expect(res.text).toContain('Invalid rcWebhookUri.');
@@ -538,6 +549,7 @@ describe('Authorization', () => {
       });
       const res = await request(server)
         .get(`/get-user-info?rcWebhookUri=${mockDomain}/`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(400);
       expect(res.text).toContain('Invalid rcWebhookUri.');
@@ -549,6 +561,7 @@ describe('Authorization', () => {
       });
       const res = await request(server)
         .get(`/get-user-info?rcWebhookUri=test.com`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(400);
       expect(res.text).toContain('Invalid rcWebhookUri.');
@@ -560,6 +573,7 @@ describe('Authorization', () => {
       });
       const res = await request(server)
         .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid.');
@@ -573,6 +587,7 @@ describe('Authorization', () => {
       });
       const res = await request(server)
         .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(401);
       expect(res.text).toContain('Token invalid.');
@@ -584,10 +599,23 @@ describe('Authorization', () => {
       });
       const res = await request(server)
         .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).user.name).toEqual('test user');
       expect(JSON.parse(res.text).formIds.length).toEqual(0);
+    });
+
+    it('should return 403 invalid referer', async () => {
+      const jwtToken = jwt.generateJwt({
+        id: user.id,
+      });
+      const res = await request(server)
+        .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('Referer', 'http://test.com')
+        .set('x-access-token', jwtToken);
+      expect(res.status).toEqual(403);
+      expect(res.text).toContain('Invalid Referer');
     });
 
     it('should get user info successfully', async () => {
@@ -614,6 +642,7 @@ describe('Authorization', () => {
       });
       const res = await request(server)
         .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).user.name).toEqual('test user');
@@ -637,6 +666,7 @@ describe('Authorization', () => {
         });
       const res = await request(server)
         .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).user.name).toEqual('test user');
@@ -657,6 +687,7 @@ describe('Authorization', () => {
         .reply(401);
       const res = await request(server)
         .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(401);
       const newUser = await User.findByPk(user.id);
@@ -675,6 +706,7 @@ describe('Authorization', () => {
         .reply(502);
       const res = await request(server)
         .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
+        .set('Referer', process.env.APP_SERVER)
         .set('x-access-token', jwtToken);
       expect(res.status).toEqual(500);
       const newUser = await User.findByPk(user.id);
