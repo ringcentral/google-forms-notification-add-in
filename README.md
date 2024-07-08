@@ -1,6 +1,6 @@
 # RingCentral Notification Add-in for Google Forms
 
-[![Build Status](https://github.com/ringcentral/google-forms-notification-add-in/workflows/CI%20Pipeline/badge.svg?branch=main)](https://github.com/ringcentral/google-forms-notification-add-in/actions)
+[![Build Status](https://github.com/ringcentral/google-forms-notification-add-in/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ringcentral/google-forms-notification-add-in/actions)
 [![Coverage Status](https://coveralls.io/repos/github/ringcentral/google-forms-notification-add-in/badge.svg?branch=main)](https://coveralls.io/github/ringcentral/google-forms-notification-add-in?branch=main)
 
 [A RingCentral Add-in](https://www.ringcentral.com/apps/google-forms-add-in-for-ringcentral) to receive Google Forms response messages at RingCentral Team Messaging.
