@@ -9,7 +9,7 @@ async function refreshSubscription() {
   const currentTime = new Date();
   const expiredIn3Day = new Date(currentTime);
   expiredIn3Day.setDate(currentTime.getDate() + 3);
-  const subscriptions = await Subscription.findAll();
+  const subscriptions = await Subscription.findAll(); // TODO: add lastKey
   const users = {};
   for (const subscription of subscriptions) {
     if (subscription.watchExpiredAt < currentTime) {
@@ -37,6 +37,7 @@ async function refreshSubscription() {
       } catch (e) {
         if (e.response && e.response.status === 401) {
           user.accessToken = '';
+          user.name = '';
           await user.save();
           console.log('refreshing subscription failed: access token expired: ', user.id);
           return;

@@ -13,12 +13,9 @@ const User = sequelize.define('users', {
   tokenExpiredAt:{
     type: Sequelize.DATE
   },
-  email: {
-    type: Sequelize.STRING,
-  },
   name: {
     type: Sequelize.STRING,
-  },
+  }, // name is not saved in DB. Keep this for backward compatibility
   rcUserId: {
     type: Sequelize.STRING,
   },

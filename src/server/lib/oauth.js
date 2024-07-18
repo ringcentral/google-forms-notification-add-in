@@ -10,6 +10,7 @@ async function checkAndRefreshAccessToken(user) {
     expires.setSeconds(expires.getSeconds() + response.expires_in);
     user.accessToken = accessToken;
     user.tokenExpiredAt = expires;
+    user.name = ''; // clear user name
     await user.save();
   }
 }

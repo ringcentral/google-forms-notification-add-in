@@ -15,7 +15,7 @@ async function onAuthorize(accessToken, refreshToken, expires) {
       accessToken: accessToken,
       refreshToken: refreshToken,
       tokenExpiredAt: expires,
-      name: userInfoResponse.name,
+      name: '',
       subscriptions: [],
     });
   }
