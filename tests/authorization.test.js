@@ -508,7 +508,7 @@ describe('Authorization', () => {
         refreshToken: 'knownRefreshToken',
         tokenExpiredAt: new Date(Date.now() + 3600 * 1000),
         subscriptions: [],
-        name: 'test user',
+        name: '',
       });
     });
 
@@ -597,6 +597,12 @@ describe('Authorization', () => {
       const jwtToken = jwt.generateJwt({
         id: user.id,
       });
+      const googleUserScope = nock('https://www.googleapis.com')
+        .get('/oauth2/v3/userinfo')
+        .reply(200, {
+          sub: 'testGoogleUserId',
+          name: 'test user',
+        });
       const res = await request(server)
         .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
         .set('Referer', process.env.APP_SERVER)
@@ -604,6 +610,7 @@ describe('Authorization', () => {
       expect(res.status).toEqual(200);
       expect(JSON.parse(res.text).user.name).toEqual('test user');
       expect(JSON.parse(res.text).formIds.length).toEqual(0);
+      googleUserScope.done();
     });
 
     it('should return 403 invalid referer', async () => {
@@ -640,6 +647,12 @@ describe('Authorization', () => {
       const jwtToken = jwt.generateJwt({
         id: user.id,
       });
+      const googleUserScope = nock('https://www.googleapis.com')
+        .get('/oauth2/v3/userinfo')
+        .reply(200, {
+          sub: 'testGoogleUserId',
+          name: 'test user',
+        });
       const res = await request(server)
         .get(`/get-user-info?rcWebhookUri=${mockRCWebhookUri}`)
         .set('Referer', process.env.APP_SERVER)
@@ -648,6 +661,7 @@ describe('Authorization', () => {
       expect(JSON.parse(res.text).user.name).toEqual('test user');
       expect(JSON.parse(res.text).formIds.length).toEqual(1);
       expect(JSON.parse(res.text).formIds[0]).toEqual('test_formId');
+      googleUserScope.done();
     });
 
     it('should refresh token and get user info successfully', async () => {
@@ -656,6 +670,12 @@ describe('Authorization', () => {
       const jwtToken = jwt.generateJwt({
         id: user.id,
       });
+      const googleUserScope = nock('https://www.googleapis.com')
+        .get('/oauth2/v3/userinfo')
+        .reply(200, {
+          sub: 'testGoogleUserId',
+          name: 'test user',
+        });
       const googleRefreshAuthScope = nock(googleTokenDomain)
         .post(googleTokenPath)
         .reply(200, {
@@ -674,6 +694,7 @@ describe('Authorization', () => {
       const newUser = await User.findByPk(user.id);
       expect(newUser.accessToken).toEqual('newAccessToken1');
       googleRefreshAuthScope.done();
+      googleUserScope.done();
     });
 
     it('should return 401 when refresh token with 401', async () => {

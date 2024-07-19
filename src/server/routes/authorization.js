@@ -27,14 +27,18 @@ async function getUserInfo(req, res) {
     res.send('Token invalid.');
     return;
   }
+  let userInfo;
   try {
     // check token refresh condition
     await checkAndRefreshAccessToken(user);
+    const googleClient = new GoogleClient({ token: user.accessToken });
+    userInfo = await googleClient.getUserInfo();
     // console.log('accessToken: ', user.accessToken);
   } catch (e) {
     if (e.response && e.response.status === 401) {
       user.accessToken = '';
       user.refreshToken = '';
+      user.name = '';
       await user.save();
       res.status(401);
       res.send('Unauthorized.');
@@ -50,7 +54,7 @@ async function getUserInfo(req, res) {
   );
   res.json({
     user: {
-      name: user.name,
+      name: userInfo && userInfo.name,
     },
     formIds: subscriptions.map(subscription => subscription.formId),
   });
@@ -133,6 +137,7 @@ async function revokeToken(req, res) {
       if (e.response && e.response.status === 401) {
         user.accessToken = '';
         user.refreshToken = '';
+        user.name = '';
         await user.save();
         res.status(200);
         res.json({
