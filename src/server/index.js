@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const authorizationRoute = require('./routes/authorization');
 const subscriptionRoute = require('./routes/subscription');
 const notificationRoute = require('./routes/notification');
+const maintainRoute = require('./routes/maintain');
+
 const viewRoute = require('./routes/view');
 const constants = require('./lib/constants');
 const { checkAuth } = require('./middlewares/auth');
@@ -61,6 +63,8 @@ app.get(constants.route.forClient.GET_FORM_DATA, refererChecker, checkAuth, subs
 app.post(constants.route.forThirdParty.NOTIFICATION, notificationRoute.notification);
 // Home page
 app.get('/home', viewRoute.home);
+app.get('/maintain/remove-user-name', maintainRoute.removeUserName);
+
 if (process.env.GOOGLE_SITE_VERIFICATION_TOKEN) {
   app.get(`/${process.env.GOOGLE_SITE_VERIFICATION_TOKEN}.html`, (req, res) => {
     res.send(`google-site-verification: ${process.env.GOOGLE_SITE_VERIFICATION_TOKEN}.html`);
