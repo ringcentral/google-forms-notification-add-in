@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.490.0",
-    "@babel/core": "^7.24.3",
+    "@babel/core": "^7.29.6",
     "@babel/plugin-transform-class-properties": "^7.24.1",
     "@babel/plugin-proposal-decorators": "^7.24.1",
     "@babel/plugin-proposal-export-default-from": "^7.24.1",
