@@ -80,7 +80,16 @@ export class Client {
       throw new Error('Google form not found');
     }
     if (response.status !== 200) {
-      throw new Error('Fetch data error please retry later');
+      let message = 'Fetch data error please retry later';
+      try {
+        const data = await response.json();
+        if (data && typeof data.message === 'string' && data.message) {
+          message = data.message;
+        }
+      } catch (e) {
+        // Older servers and proxies may return a plain-text or HTML error.
+      }
+      throw new Error(message);
     }
     const data = await response.json();
     return data.forms;

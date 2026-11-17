@@ -31,7 +31,6 @@ async function getFormData(req, res) {
     }
     const googleClient = new GoogleClient({ token: user.accessToken });
     const forms = await Promise.all(formIds.map(async (formId) => {
-      // TODO: handle no permission issue
       const form = await googleClient.getForm(formId);
       return form;
     }));
@@ -39,9 +38,10 @@ async function getFormData(req, res) {
       forms,
     });
   } catch (e) {
-    errorLogger(e && e.message);
+    errorLogger(e);
     if (e.response) {
-      if (e.response.status === 401) {
+      const { status, data } = e.response;
+      if (status === 401 || (status === 400 && data && data.error === 'invalid_grant')) {
         if (user) {
           user.accessToken = '';
           user.refreshToken = '';
@@ -51,9 +51,28 @@ async function getFormData(req, res) {
         res.send('Unauthorized.');
         return;
       }
-      if (e.response.status === 404) {
+      if (status === 404) {
         res.status(404);
         res.send('Not found');
+        return;
+      }
+      if (status === 403) {
+        const googleError = data && data.error;
+        const reasons = [
+          ...((googleError && googleError.details) || []),
+          ...((googleError && googleError.errors) || []),
+        ].map(detail => detail.reason);
+        let message = 'Cannot access this Google Form. Make sure the Google account authorized in the add-in has edit access to the form.';
+        if (reasons.includes('SERVICE_DISABLED') || reasons.includes('accessNotConfigured')) {
+          message = 'The Google Forms API is disabled for this add-in. Contact the add-in administrator to enable it in the Google Cloud project.';
+        } else if (reasons.includes('ACCESS_TOKEN_SCOPE_INSUFFICIENT') || reasons.includes('insufficientPermissions')) {
+          message = 'Google Forms access was not granted. Authorize the add-in again and allow read-only access to forms and responses.';
+        }
+        res.status(403).json({ message });
+        return;
+      }
+      if (status === 429) {
+        res.status(429).json({ message: 'Google Forms request limit reached. Please wait a moment and try again.' });
         return;
       }
     }
