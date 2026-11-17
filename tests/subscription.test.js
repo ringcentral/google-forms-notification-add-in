@@ -139,6 +139,50 @@ describe('Subscription', () => {
       googleFormScope.done();
     });
 
+    it.each([
+      [403, 'Forbidden', 403, 'has edit access'],
+      [403, { error: { details: [{ reason: 'SERVICE_DISABLED' }] } }, 403, 'Google Forms API is disabled'],
+      [403, { error: { errors: [{ reason: 'accessNotConfigured' }] } }, 403, 'Google Forms API is disabled'],
+      [403, { error: { details: [{ reason: 'ACCESS_TOKEN_SCOPE_INSUFFICIENT' }] } }, 403, 'Authorize the add-in again'],
+      [403, { error: { errors: [{ reason: 'insufficientPermissions' }] } }, 403, 'Authorize the add-in again'],
+      [429, { error: { status: 'RESOURCE_EXHAUSTED' } }, 429, 'request limit reached'],
+    ])('should explain Google form error %s with body %j', async (googleStatus, body, expectedStatus, message) => {
+      const jwtToken = jwt.generateJwt({ id: user.id });
+      const googleFormScope = nock('https://forms.googleapis.com')
+        .get('/v1/forms/mockFormId')
+        .reply(googleStatus, body);
+      const res = await request(server)
+        .get('/get-form-data?formIds=mockFormId')
+        .set('Referer', process.env.APP_SERVER)
+        .set('x-access-token', jwtToken);
+
+      expect(res.status).toEqual(expectedStatus);
+      expect(res.body.message).toContain(message);
+      const newUser = await User.findByPk(user.id);
+      expect(newUser.accessToken).toEqual(user.accessToken);
+      expect(newUser.refreshToken).toEqual(user.refreshToken);
+      googleFormScope.done();
+    });
+
+    it('should require authorization again when the refresh token is revoked', async () => {
+      user.tokenExpiredAt = new Date(Date.now() - 3600 * 1000);
+      await user.save();
+      const jwtToken = jwt.generateJwt({ id: user.id });
+      const googleRefreshAuthScope = nock(googleTokenDomain)
+        .post(googleTokenPath)
+        .reply(400, { error: 'invalid_grant', error_description: 'Token has been expired or revoked.' });
+      const res = await request(server)
+        .get('/get-form-data?formIds=mockFormId')
+        .set('Referer', process.env.APP_SERVER)
+        .set('x-access-token', jwtToken);
+
+      expect(res.status).toEqual(401);
+      const newUser = await User.findByPk(user.id);
+      expect(newUser.accessToken).toEqual('');
+      expect(newUser.refreshToken).toEqual('');
+      googleRefreshAuthScope.done();
+    });
+
     it('should refresh token and return form data successfully', async () => {
       user.tokenExpiredAt = new Date(Date.now() - 3600 * 1000);
       await user.save();
